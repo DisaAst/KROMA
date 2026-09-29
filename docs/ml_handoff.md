@@ -1,17 +1,17 @@
 # ML → Product handoff
 
-## Текущая версия
+## Current version
 
-Исходный main интеграции: `bf088ec8f9cf6e7bf3029ad55463805f47853e30`. В нём уже были v006 артефакты, но service/manifest выбирали v005. Product integration подключила существующие red-edge maps/component statistics/ring contrast из исследования, сохранив float16 roundtrip, порядок признаков и правила 0.3/0.8/0.2.
+Initial main integration: `bf088ec8f9cf6e7bf3029ad55463805f47853e30`. It already had v006 artifacts, but service/manifest chose v005. Product integration connected existing red-edge maps/component statistics/ring contrast from the study, keeping float16 roundtrip, feature order and rules 0.3/0.8/0.2.
 
-Переобучение не проводилось. `weighted_comboloss_sampler.pt` по последующему указанию пользователя не исследовался и не подключался.
+No retraining was carried out. `weighted_comboloss_sampler.pt`, at the subsequent instruction of the user, was not investigated or connected.
 
 ## Acceptance
 
-Полный competition run: 180 AF, 89 BS, 447 строк, no failed chips. CSV-identical `artifacts/submissions/submission_v006.csv`. Три прямых service BS-прогона (`BS_te_000001`, `000020`, `000089`) дали те же RLE. TEST location/date не использовались. Timings и контрольная команда в `docs/key_metrics.md`.
+Complete competition run: 180 AF, 89 BS, 447 lines, no failed chips. CSV-identical `artifacts/submissions/submission_v006.csv`. Three direct service BS runs (`BS_te_000001`, `000020`, `000089`) gave the same RLEs. TEST location/date not used. Timings and Control Team in `docs/key_metrics.md`.
 
-## Следующий ML handoff
+## The next ML handoff
 
-Передавайте комплект весов + manifest, SHA256, stable version, input/output contracts, threshold/feature order и эталонный submission. Backend вызывает адаптер и не должен импортировать Torch/LightGBM. Не заменяйте v006 файл молча: новая версия требует invalidation cache и новой версии prepared datasets, обновления UI/README/model card. После смены комплекта перезапускайте сервис.
+Pass a set of weights + manifest, SHA256, stable version, input/output contracts, threshold/feature order and reference submission. Backend calls adapter and should not import Torch/LightGBM. Do not replace v006 file silently: the new version requires invalidation cache and a new version of prepared datasets, UI/README/model card updates. After changing the set, restart the service.
 
-Сохранено ограничение процесса: MPS Torch отдельно от LightGBM. Competition neural stage выполняется batch. Веб cache привязан к chip и version; persistent worker пока не применяется.
+Process limitation saved: MPS Torch separate from LightGBM. Competition neural stage is performed by batch. Web cache tied to chip and version; persistent worker not yet applicable.

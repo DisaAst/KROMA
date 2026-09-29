@@ -1,55 +1,55 @@
-# WEB-002. Подготовленные сцены и источник результатов
+# WEB-002. Prepared scenes and source of results
 
-Статус: PARTIAL — инфраструктура готова, ожидается разрешённый real/model_output. Приоритет: P0. Область: интеграция данных, backend. Критерии: R1, R2, R3.
+Status: PARTIAL – infrastructure ready, real/model_output allowed. Priority: P0. Area: Data integration, backend. Criteria: R1, R2, R3.
 
-Зависимости: WEB-001; доступные результаты обработки реальных геопривязанных сцен. Разблокирует: WEB-003, 004, 009, 011.
+Dependencies: WEB-001; Available results of processing real geo-referenced scenes. Unlock: WEB-003, 004, 009, 011.
 
-## Цель и проблема
+## Purpose and problem
 
-Заменить синтетические результаты в новом анализе территории воспроизводимым подготовленным набором. Полный спутниковый ingestion не требуется. Основной источник сейчас — `backend/app/repositories/provider.py`, возвращающий `DemoFireRepository`; его нельзя незаметно выдать за реальные расчёты.
+Replace synthetic results in the new analysis with a reproducible prepared set. Full satellite ingestion is not required. The main source now is `backend/app/repositories/provider.py`, which returns `DemoFireRepository`; it cannot be imperceptibly passed off as a real calculation.
 
-## Вход от команды данных/ML
+## Entrance from data command/ML
 
-- Геопривязанные наблюдения активного горения с временем и источником.
-- Результаты BS с классами 0–3, nodata/маской валидности, исходной CRS и transform.
-- Реальные scene IDs, время съёмки «до/после», spatial footprint и известная доля облачности.
-- Идентификатор/версия обработки, связь оценки с гарью и парой сцен.
-- Информация о лицензии и допустимом распространении артефактов.
+- Geo-related observations of active combustion with time and source.
+- BS results with classes 0–3, nodata/validity mask, source CRS and transform.
+- Real Scene IDs, Before/After Shooting Time, Spatial Footprint and Known Share of Cloud.
+- Identifier/processing version, evaluation link to the garland and a pair of scenes.
+- Information on the license and permissible distribution of artifacts.
 
-Нельзя восстанавливать геопривязку обезличенных тестовых чипов. Использовать разрешённые геопривязанные данные, например доступную обучающую часть или независимые исторические сцены. Эталонные маски допустимы как подписанные тестовые материалы, но не как якобы предсказания модели.
+You can not restore the geo-reference of impersonal test chips. Use permitted geo-referenced data, such as an accessible learning part or independent historical scenes. Reference masks are acceptable as signed test materials, but not as model predictions.
 
-## Что сделать
+## What to do
 
-1. Подготовить минимум один полностью трассируемый реальный пример, лучше 2–3 сценария: гарь с несколькими классами, частичное пересечение области, отсутствие обнаружений/недостаток покрытия. Это рекомендуемый демонстрационный объём, не требование организаторов к числу сцен.
-2. Создать versioned manifest по WEB-001: пути, checksum, охват, даты, origin, версии обработки, scene IDs, классы, CRS, resolution/transform, валидность и лицензии.
-3. Сделать команду проверки/подготовки набора без ручного редактирования Python. Проверять наличие файлов, контрольные суммы, геопривязку, классы и метаданные.
-4. Добавить read-only repository/adapter подготовленных результатов; не удалять деморежим и LIVE.
-5. Загружать набор из конфигурируемого пути/volume. Не завязываться на абсолютные пути машины разработчика или актуальную дату.
-6. Обеспечить стабильные ID, отсутствие дублей и детерминированный порядок выдачи.
-7. Опубликовать каталог доступных наборов для UI/API, включая ограничения охвата.
-8. Разделить малые синтетические фикстуры для CI и демонстрационный набор результатов модели. Секреты и тяжёлые/ограниченные исходники не коммитить.
+1. Prepare at least one fully traceable real-world example, preferably 2-3 scenarios: gar with several classes, partial intersection of the area, no detections / lack of coverage. This is the recommended demo volume, not the requirement of the organizers to the number of scenes.
+2. Create versioned manifest at WEB-001: paths, checksum, coverage, dates, origin, processing versions, scene IDs, classes, CRS, resolution/transform, validity and licenses.
+3. Make a set check/prepare command without manual Python editing. Check the availability of files, checksums, georeference, classes and metadata.
+4. Add read-only repository/adapter of prepared results; do not delete demo mode and LIVE.
+5. Download a set from a configurable path/volume. Do not get tied to the absolute paths of the developer machine or the current date.
+6. Provide stable IDs, no duplicates and deterministic issuance.
+7. Publish a catalog of available UI/API kits, including coverage limitations.
+8. Separate small synthetic fixtures for CI and a demonstration set of model results. Secrets and Heavy/Limited Sources Do Not Commit.
 
-## Результат
+## The result
 
-- Manifest и инструкция получения/подключения артефактов.
-- Adapter/repository, валидатор набора, маленькие тестовые fixtures.
-- Известный пример bbox + даты + ожидаемые результаты для WEB-010/012.
-- Явный перечень доступных и отсутствующих входов. Если выходов модели нет, задача остаётся незавершённой в части реальной демонстрации.
+- Manifest and instructions for obtaining/connecting artifacts.
+- Adapter/repository, set validator, small test fixtures.
+- Famous example of bbox + dates + expected results for WEB-010/012.
+- Explicit list of available and missing inputs. If there are no outputs of the model, the task remains unfinished in terms of the real demonstration.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] После рестарта на том же наборе получаются те же наблюдения, зоны и метаданные.
-- [ ] У каждого результата можно установить источник и версию обработки.
-- [ ] Набор не зависит от доступности FIRMS в момент демонстрации.
-- [ ] Ошибочные/отсутствующие артефакты обнаруживаются до выдачи правдоподобных чисел.
-- [ ] Даты, scene IDs и coverage взяты из данных, не сгенерированы для оформления карточки.
-- [ ] Результаты реальных сцен не смешиваются с `DemoFireRepository`.
-- [ ] Все лицензии/ограничения и способ передачи организаторам описаны.
+- [ ] After restarting, the same set of observations, zones and metadata are obtained.
+- [ ] Each result can be determined by the source and version of the processing.
+- [ ] The set is independent of the availability of FIRMS at the time of demonstration.
+- [ ] Error/missing artifacts are detected before plausible numbers are given.
+- [ ] Dates, scene IDs and coverage are taken from data, not generated for card processing.
+- [ ] The results of real scenes are not mixed with `DemoFireRepository`.
+- [ ] All licenses/restrictions and the method of transfer to the organizers are described.
 
-## Проверки
+## Checks
 
-Повторная подготовка даёт одинаковые checksums. Удалённый файл, неверный hash, недопустимый класс, недостающая CRS, дубли ID и противоречивые даты приводят к диагностике. Ограниченный набор можно подключить в чистом окружении по инструкции.
+Repeated preparation gives the same checksums. Deleted file, incorrect hash, invalid class, missing CRS, ID duplicates and conflicting dates lead to diagnosis. A limited set can be connected in a clean environment according to the instructions.
 
-## Вне задачи
+## Outside the task
 
-Обучение модели, скачивание произвольных новых сцен по запросу пользователя, инфраструктура обработки всей страны и обязательная интеграция PostGIS.
+Model training, downloading arbitrary new scenes at the user's request, country-wide processing infrastructure and mandatory PostGIS integration.

@@ -1,6 +1,6 @@
-# Архитектура KROMA
+# KROMA Architecture
 
-Планируемый поток:
+Planned flow:
 
 ```text
 External satellite/weather/geospatial sources
@@ -12,13 +12,13 @@ External satellite/weather/geospatial sources
   → frontend map
 ```
 
-Тепловые детекции MODIS, VIIRS и NASA FIRMS предполагается очищать и объединять в пожарные события. ML будет оценивать confidence, Thermal Memory и приоритет; geo — геометрии, растры и анализ гарей по Sentinel-2 и другим источникам. Внешняя погода и данные об инфраструктуре станут входами для оценки угрозы. Redis и фоновые задачи можно добавить, когда появится регулярная загрузка данных.
+MODIS, VIIRS and NASA FIRMS thermal detections are supposed to be cleaned and combined into fire events. ML will evaluate confidence, Thermal Memory and priority; geo – geometry, rasters and hare analysis by Sentinel-2 and other sources. External weather and infrastructure data will be inputs to threat assessment. Redis and background tasks can be added when regular data downloads appear.
 
-Границы проекта:
+Project boundaries:
 
-- Research code и production code разделены: notebooks и проверки гипотез находятся в `research/`, проверенные реализации — в `ml/src/` или `geo/src/`.
-- Data и source code разделены: локальные наборы данных находятся в `data/` и не коммитятся.
-- Geo и ML разделены: преобразования координат, геометрий, растров и подготовка PostGIS относятся к `geo/`; выводы, оценки и модели — к `ml/`.
-- Backend и notebooks разделены: API предоставляет результаты, но не исполняет исследовательский код.
+- Research code and production code are separated: notebooks and hypothesis testing are in `research/`, verified implementations are in `ml/src/` or `geo/src/`.
+- Data and source code are separated: local datasets are in `data/` and do not commit.
+- Geo and ML are separated: coordinate transformations, geometries, rasters and PostGIS preparation refer to `geo/`; conclusions, estimates and models refer to `ml/`.
+- Backend and Notebooks Separate: API Provides Results but Does Not Execute Research Code.
 
-На текущем этапе реализованы `GET /health`, стартовая страница, локальная конфигурация сервисов и отдельная нормализация CSV NASA FIRMS VIIRS. Регулярная загрузка, хранилище и аналитический поток ещё не подключены.
+At the current stage implemented `GET /health`, the launch page, local configuration of services and a separate normalization CSV NASA FIRMS VIIRS. Regular download, storage and analytics stream not yet connected.

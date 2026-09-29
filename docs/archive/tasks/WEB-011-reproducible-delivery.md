@@ -1,41 +1,41 @@
-# WEB-011. Воспроизводимый запуск и поставка веб-сервиса
+# WEB-011. Reproduced launch and delivery of a web service
 
-Статус: PARTIAL — поставка готова, нужен clean-room witness. Приоритет: P1, обязательно до защиты. Область: инфраструктура и документация. Критерий: R1; поддержка R2/R3 и воспроизводимости.
+PARTIAL - Delivery is ready, clean-room witness required. Priority: P1, mandatory before protection. Area: Infrastructure and documentation. Criterion: R1; support for R2/R3 and reproducibility.
 
-Зависимости: WEB-002, WEB-004, WEB-008, WEB-010.
+Dependencies: WEB-002, WEB-004, WEB-008, WEB-010.
 
-## Цель
+## Purpose
 
-Дать организаторам возможность запустить сервис по README без правок кода, подключить фиксированный набор и повторить запрос. Работающий сервер команды и автодеплой не заменяют воспроизводимость поставки.
+Give the organizers the opportunity to run the service by README without code editing, connect a fixed set and repeat the request. Working team server and autodeploy do not replace the reproducibility of delivery.
 
-## Что сделать
+## What to do
 
-1. Актуализировать README: требования окружения, Docker/Compose, переменные окружения, порты, подготовка артефактов, запуск, остановка, логи и диагностика.
-2. Предоставить одну основную команду запуска после документированной подготовки данных. Предпочесть существующий Compose; отдельный профиль prepared/демонстрации допустим, если упрощает воспроизведение.
-3. В `.env.example` описать путь набора и необходимые параметры без секретов. Демо подготовленных сцен не должно требовать FIRMS/API-ключей.
-4. Зафиксировать зависимости и версии образов/наборов в степени, необходимой для повторного запуска. Не использовать загрузку «последнего» непроверяемого артефакта.
-5. Проверять manifest/checksums при подготовке или старте. Разделить живость процесса и готовность источника анализа: `/health` сам по себе не доказывает наличие данных.
-6. Обеспечить сохранность/повторное подключение артефактов при рестарте и смене release; не хранить единственную копию внутри временного контейнера.
-7. Добавить точный cURL-пример каталога, анализа и каждого экспорта с реальными dataset/version/bbox/датами из подготовленного набора.
-8. В README объяснить статусы no coverage/offline, источники данных, метод площади, временную семантику и известные ограничения.
-9. Подготовить безопасный способ передачи ограниченных данных организаторам. Не включать ключи, пароли и запрещённые к распространению сцены в публичный репозиторий/образ.
-10. Пройти запуск в чистом каталоге/окружении без локальных developer-paths и скрытых mounts.
-11. Проверить новую функциональность после деплоя на существующем сервере, не затрагивая сторонние сервисы. Развёртывать только при отдельном переходе к реализации/публикации, не в рамках создания этого плана.
+1. Update README: environment requirements, Docker/Compose, environment variables, ports, artifact preparation, launch, stop, logs and diagnostics.
+2. Provide one main start command after documented data preparation. Prefer existing Compose; separate prepared/demonstration profile is acceptable if it simplifies playback.
+3. In `.env.example`, describe the dialing path and the necessary parameters without secrets. Demo of prepared scenes should not require FIRMS/API keys.
+4. Capture dependencies and versions of images/sets to the extent necessary to re-run. Do not download the “last” untested artifact.
+5. Check manifest/checksums when preparing or starting. Separate process vivacity and analysis source readiness: `/health` alone does not prove data availability.
+6. Safeguard/reconnect artifacts when restarting and changing release; do not store a single copy inside a temporary container.
+7. Add an accurate cURL example of the catalog, analysis and each export with real dataset/version/bbox/dates from the prepared set.
+8. README explains no coverage/offline statuses, data sources, area method, time semantics and known limitations.
+9. Prepare a secure way to transfer limited data to the organizers. Do not include keys, passwords and forbidden scenes in the public repository / image.
+10. Run in a clean directory/environment without local developer-paths and hidden mounts.
+11. Check new functionality after deploitation on an existing server without affecting third-party services. Deploy only in a separate transition to implementation / publication, not within the framework of creating this plan.
 
-## Проверки отказов
+## Failure checks
 
-Нет данных, неправильный путь, checksum mismatch, занятый порт, backend недоступен, внешние тайлы не грузятся. Каждому случаю соответствует диагностируемое состояние/инструкция; запуск не зависает бесконечно без сообщения.
+No data, wrong path, checksum mismatch, busy port, backend unavailable, external tiles not loaded. Each case corresponds to a diagnosable state/instruction; the launch does not hang indefinitely without a message.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] Человек, не разрабатывавший код, запустил сервис по README без ручной правки исходников.
-- [ ] Подготовленный анализ работает без внешнего FIRMS-ключа и без скачивания новых сцен во время запроса.
-- [ ] Запросы из README действительно выполняются, файлы экспорта валидны.
-- [ ] Перезапуск и повторный deploy сохраняют доступность указанной версии набора и результаты.
-- [ ] Указаны ограничения внешней подложки; её отказ не блокирует API/справку/экспорт.
-- [ ] Зафиксированы версии окружения, набора, проверенный commit и результаты smoke-тестов.
-- [ ] Документация не обещает полноценный LIVE/ML/постоянное хранилище, если это не реализовано.
+- [ ] A person who did not develop the code, launched a service on README without manual editing of the source.
+- [ ] The prepared analysis works without an external FIRMS key and without downloading new scenes during the request.
+- [ ] Requests from README are indeed executed, export files are valid.
+- [ ] Restart and re-install retain availability of specified kit version and results.
+- [ ] External substrate restrictions are specified; its failure does not block API/reference/export.
+- [ ] Versions of the environment, set, verified commit and smoke test results are recorded.
+- [ ] Documentation does not promise full LIVE/ML/Permanent Storage unless implemented.
 
-## Вне задачи
+## Outside the task
 
-Изменение SSH-доступов/секретов без необходимости, переразмещение сторонних серверных сервисов, промышленный кластер, обязательная миграция в PostGIS. Воспроизводимость веба не заменяет инструкции обучения/конкурсного инференса, которые делаются отдельно.
+Unnecessarily changing SSH accesses/secrets, relocating third-party server services, industrial cluster, mandatory migration to PostGIS. Web reproducibility does not replace training/competitive inferencing instructions that are made separately.

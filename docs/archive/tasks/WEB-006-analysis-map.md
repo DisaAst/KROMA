@@ -1,41 +1,41 @@
-# WEB-006. Карта результатов анализа
+# WEB-006. Map of analysis results
 
-Статус: DONE (19.09.2026). Приоритет: P0. Область: frontend/MapLibre. Критерий: R2.
+Status: DONE (19.09.2026)). Priority: P0. Area: frontend/MapLibre. Criterion: R2.
 
-Зависимости: WEB-004, WEB-005; геометрии WEB-003.
+Dependencies: WEB-004, WEB-005; geometry WEB-003.
 
-## Цель
+## Purpose
 
-На одной карте показывать выбранную область, термоточки и неперекрывающиеся зоны трёх степеней поражения из одного результата. Не смешивать их с произвольными слоями LIVE/демо.
+On one map, show the selected area, hotspots and non-overlapping zones of three degrees of damage from one result. Do not mix them with arbitrary LIVE/demo layers.
 
-## Что сделать
+## What to do
 
-1. Подключить результат анализа как отдельные GeoJSON sources/layers; не брать данные из нескольких старых endpoints с разными фильтрами.
-2. Показать границу зафиксированного AOI. При необходимости отдельно обозначить черновую область, чтобы её нельзя было спутать с рассчитанной.
-3. Отобразить термоточки, контуры гарей и зоны классов 1/2/3. Поддержать Polygon/MultiPolygon и отверстия без артефактов.
-4. Добавить переключатели видимости точек/гарей, легенду с русскими названиями «Слабая», «Средняя», «Сильная степень поражения». Цвет — не единственный способ узнать класс.
-5. По клику на зону показать ID, класс, площадь именно внутри AOI, дату послепожарной съёмки, источник/версию. По точке — ID, время, источник и только доступные исходные показатели.
-6. Добавить «Показать область целиком». Не перенастраивать камеру при каждом фоновом refetch или смене темы.
-7. Привязать подзаголовок карты к применённым датам/набору, а не к черновой форме.
-8. Показать предупреждение о частичном покрытии; при доступной геометрии coverage добавить его контур/маску. Не закрашивать необследованную территорию как отсутствие пожаров.
-9. Обрабатывать сбои подложки отдельно от ошибок данных. Справка и экспорт остаются доступны, если внешние тайлы не загрузились; обеспечить читабельный нейтральный фон.
-10. Переиспользовать имеющиеся базовые слои и темы; аналитические данные изолировать от operational layers, если их существующий жизненный цикл/таймлайн не подходит.
+1. Connect the analysis result as separate GeoJSON sources/layers; do not take data from multiple old endpoints with different filters.
+2. Show the boundary of the fixed AOI. If necessary, separately designate the rough area so that it cannot be confused with the calculated.
+3. Display hotspots, contours of hares and zones of classes 1/2/3. Support Polygon/MultiPolygon and artifact-free holes.
+4. Add point/gare visibility switches, a legend with Russian names "Weak", "Mediocre", "Severe degree of defeat". Color is not the only way to know a class.
+5. By clicking on the zone, show ID, class, area exactly inside the AOI, date of post-fire shooting, source / version. By point – ID, time, source and only available baselines.
+6. Add "Show the whole area". Do not reconfigure the camera with every background refetch or topic change.
+7. Link the subheading of the map to the applied dates/set, not to the draft form.
+8. Show a partial coating warning; if coverage geometry is available add its contour/mask. Do not paint an unexplored area as the absence of fires.
+9. Handle substrate failures separately from data errors. Help and export remain available if external tiles are not loaded; provide a readable neutral background.
+10. Reuse existing base layers and topics; isolate analytical data from operational layers if their existing lifecycle/timeline is not appropriate.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] Все показанные объекты принадлежат текущему `result_id`; данных старого запроса после переключения нет.
-- [ ] Все классы различимы в двух темах, легенда совпадает с картой и справкой.
-- [ ] Полигон с отверстием и MultiPolygon отображаются корректно.
-- [ ] Всплывающие карточки не обрезаются краем панели/экрана и закрываются клавишей Escape.
-- [ ] Сумма/площадь в карточке не пересчитывается по экрану: используется серверное значение.
-- [ ] Для нулевого результата карта сохраняет AOI и объясняет отсутствие объектов.
-- [ ] Переключение видимости/масштаба не меняет итогов справки и экспорта.
-- [ ] Ошибка внешней подложки не превращается в ошибку самого анализа.
+- [ ] All objects shown belong to the current `result_id`; there is no data from the old request after switching.
+- [ ] All classes are distinguishable in two themes, the legend coincides with the map and reference.
+- [ ] Polygon with hole and MultiPolygon are displayed correctly.
+- [ ] Pop-up cards are not cut off by the edge of the panel / screen and closed with the Escape key.
+- [ ] The amount / area in the card is not recalculated on the screen: the server value is used.
+- [ ] For zero result, the map saves the AOI and explains the absence of objects.
+- [ ] Switching visibility / scale does not change the results of reference and export.
+- [ ] An external substrate error does not become an analysis error.
 
-## Проверки
+## Checks
 
-Контрольный набор с тремя классами, пустой результат, точка на границе, узкий полигон, отверстие, несколько островов, частичное покрытие, смена запроса и темы, повторная загрузка стиля, недоступные тайлы и узкий экран.
+Control set with three classes, empty result, point on the border, narrow polygon, hole, several islands, partial coverage, change of request and theme, reload style, inaccessible tiles and narrow screen.
 
-## Вне задачи
+## Outside the task
 
-Новые прогнозные слои, спутниковое скачивание в реальном времени, редактирование результатов модели вручную и обязательный split-screen снимков.
+New predictive layers, real-time satellite download, manual model editing and mandatory split-screen images.

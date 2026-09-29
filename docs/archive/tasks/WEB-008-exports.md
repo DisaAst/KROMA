@@ -1,47 +1,47 @@
-# WEB-008. Выгрузка контуров и машиночитаемой справки
+# WEB-008. Unloading of contours and machine-readable reference
 
-Статус: DONE (19.09.2026). Приоритет: P0. Область: backend + frontend. Критерии: R2, R3; поддерживает R1.
+Status: DONE (19.09.2026)). Priority: P0. Area: backend + frontend. Criteria: R2, R3; supports R1.
 
-Зависимости: WEB-003, WEB-004, WEB-007.
+Dependencies: WEB-003, WEB-004, WEB-007.
 
-## Цель
+## Purpose
 
-Дать пользователю пригодные для ГИС и дальнейшей обработки файлы ровно того результата, который он видит. Наличие внутреннего GeoJSON endpoint без удобного экспорта выбранного запроса недостаточно для законченного сценария.
+Give the user suitable for GIS and further processing files exactly the result that he sees. Having an internal GeoJSON endpoint without conveniently exporting the selected request is not enough for a finished scenario.
 
-## Что сделать на backend
+## What to do at the backend
 
-1. Реализовать endpoints экспорта из [контракта](analysis-contract.md), используя общий AnalysisService без отдельного алгоритма фильтрации/расчёта.
-2. Получать полные параметры применённого запроса и `expected_result_id`. При несовпадении вернуть 409 с инструкцией пересчитать, не скачивать другие данные.
-3. GeoJSON: FeatureCollection зон с Polygon/MultiPolygon, WGS84 longitude/latitude, уникальным ID, классом, площадью пересечения и происхождением.
-4. Не включать полный контур и его зоны как равноправные площади одного экспортного слоя. Группировать зоны можно по `burn_event_id`.
-5. CSV/JSON: итог и три класса, counts, параметры, source/version, coverage/warnings, CRS/метод и result ID.
-6. Выдать корректные Content-Type, Content-Disposition и безопасное имя файла. При необходимости открыть Content-Disposition через настроенный CORS.
-7. Валидный пустой результат выгружать как пустой FeatureCollection и справку со статусом. При отсутствии покрытия не подменять `null` нулём.
-8. Устранить CSV-инъекции в текстовых значениях, если в них может попасть пользовательский/внешний ввод; корректно экранировать запятые, кавычки, переносы и кириллицу.
+1. Implement endpoints of exports from [contract](analysis-contract.md), Using a common AnalysisService without a separate filtering/calculation algorithm.
+2. Get the full parameters of the applied query and `expected_result_id`. If there is a mismatch, return the 409 with the instructions to recalculate, do not download other data.
+3. GeoJSON: FeatureCollection zones with Polygon/MultiPolygon, WGS84 longitude/latitude, unique ID, class, intersection area and origin.
+4. Do not include the full contour and its zones as equal areas of one export layer. Zones can be grouped by `burn_event_id`.
+5. CSV/JSON: total and three classes, counts, parameters, source/version, coverage/warnings, CRS/method and result ID.
+6. Provide correct Content-Type, Content-Disposition and secure file name. If necessary, open Content Disposition via configured CORS.
+7. Valid empty result unload as empty FeatureCollection and status certificate. In the absence of coverage, do not replace `null` with zero.
+8. Eliminate CSV injections in text values, if they can get user / external input; correctly shield commas, quotation marks, transfers and Cyrillic.
 
-## Что сделать на frontend
+## What to do on the frontend
 
-- Две основные кнопки: «Скачать контуры · GeoJSON» и «Скачать справку · CSV». JSON-справка может быть дополнительным действием.
-- Передавать параметры показанного результата, а не черновика формы/текущей камеры.
-- Показывать подготовку/ошибку файла, позволять повторить действие.
-- Не сохранять JSON ошибки как успешный `.geojson`/`.csv` файл.
-- Корректно освобождать object URLs, если используется Blob; не встраивать большие payload в URL.
+- Two main buttons: "Download contours · GeoJSON" and "Download help · CSV". A JSON Help Can Be an Additional Action.
+- Transmit the parameters of the shown result, and not the draft form / current camera.
+- Show the preparation/error of the file, allow you to repeat the action.
+- Do not save JSON errors as a successful `.geojson`/`.csv` file.
+- Correctly free object URLs if Blob is used; do not embed large payloads in the URL.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] GeoJSON открывается независимым парсером и в ГИС/просмотрщике с правильным расположением.
-- [ ] Все зоны имеют уникальный ID, class_id 1/2/3, severity и area_ha.
-- [ ] Геометрии обрезаны по AOI; повторный подсчёт согласуется с атрибутами в установленном допуске.
-- [ ] Сумма зон/классов согласуется со справкой и картой.
-- [ ] CSV читается стандартным парсером, JSON соответствует схеме, кириллица сохранена.
-- [ ] После изменения черновика формы скачивается старый показанный результат, пока новый расчёт не применён.
-- [ ] Скачать те же файлы можно напрямую через REST без UI.
-- [ ] Повторная выгрузка фиксированного результата воспроизводит содержательные данные; допустимые изменяемые timestamps описаны.
+- [ ] GeoJSON opens with an independent parser and in a GIS/viewer with the correct location.
+- [ ] All zones have a unique ID, class_id 1/2/3, severity and area_ha.
+- [ ] Geometry is trimmed by AOI; recounting is consistent with attributes in the established tolerance.
+- [ ] The sum of zones / classes is consistent with the certificate and map.
+- [ ] CSV reads standard parser, JSON matches circuit, Cyrillic is saved.
+- [ ] After changing the form draft, the old shown result is downloaded until the new calculation is applied.
+- [ ] You can download the same files directly via REST without UI.
+- [ ] Reuploading a fixed result reproduces meaningful data; allowable variable timestamps are described.
 
-## Проверки
+## Checks
 
-Интеграционные тесты всех MIME/заголовков, содержимого, имён файлов, пустых результатов и 409. Проверка ошибок 422/404/503, истёкшего/удалённого набора, повторных кликов. Независимый геопересчёт, CSV round-trip и сверка трёх форм представления результата.
+Integration tests of all MIME/headers, content, filenames, empty results and 409. Error check 422/404/503, expired/deleted set, repeated clicks. Independent geo-calculation, CSV round-trip and reconciliation of three forms of representation of the result.
 
-## Вне задачи
+## Outside the task
 
-Shapefile и PDF: для минимального закрытия достаточно GeoJSON и CSV/JSON. Не делать отдельную систему отчётности и хранение файлов пользователя без необходимости.
+Shapefile and PDF: GeoJSON and CSV/JSON are sufficient for minimum closure. Do not make a separate reporting system and store user files without the need.

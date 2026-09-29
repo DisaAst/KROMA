@@ -1,154 +1,154 @@
-# Работа с фичами и данными для максимизации score
+# Working with features and data to maximize scores
 
-## Главный вывод
+## Main conclusion
 
-По текущему логу IoU, вероятнее всего, идут в порядке `[фон, класс 1, класс 2, класс 3]`:
+According to the current IoU logo, most likely go in order `[фон, класс 1, класс 2, класс 3]`:
 
-- фон: `0.8847`;
-- слабая степень, класс 1: `0.3062`;
-- средняя степень, класс 2: `0.5054`;
-- сильная степень, класс 3: `0.6671`.
+- background: `0.8847`;
+- weak grade, class 1: `0.3062`;
+- middle degree, class 2: `0.5054`;
+- strong degree, class 3: `0.6671`.
 
-`mIoU=0.5909` включает фон и поэтому выглядит оптимистично. Чекпоинт сохраняется по правильной целевой метрике:
+`mIoU=0.5909` includes the background and therefore looks optimistic. Checkpoint is saved by the correct target metric:
 
 ```text
 (0.3062 + 0.5054 + 0.6671) / 3 = 0.4929
 ```
 
-Главная проблема класса 1 — не обычный дисбаланс. В обучающей выборке распределение классов гари составляет `40.0 / 37.1 / 22.9%`, то есть слабая степень — самый частый класс. Она проседает потому, что спектрально ближе всего к фону, часто лежит по границе гари и зависит от типа покрова.
+The main problem of class 1 is not an ordinary imbalance. In the training sample, the distribution of classes is `40.0 / 37.1 / 22.9%`, that is, the weak degree is the most frequent class. It sags because it is spectrally closest to the background, often lies along the edge of the burn and depends on the type of cover.
 
-Это прямо следует из [постановки кейса](../description/Постановка_кейса_—_Мониторинг_природных_пожаров_КосмоХакатон_2026.pdf): степень поражения относительна типу растительности, а train и private test разнесены одновременно по времени и территории.
+It follows directly from [case-making](../description/Постановка_кейса_—_Мониторинг_природных_пожаров_КосмоХакатон_2026.pdf): The degree of damage is relative to the type of vegetation, and the train and private test are separated simultaneously in time and territory.
 
-Официальная метрика:
+Official metric:
 
 ```text
 Score = 0.35 × F1_af + 0.35 × IoU_burn + 0.30 × mIoU_sev
 ```
 
-Поэтому улучшение `IoU_1` с `0.306` до `0.45` даст примерно `+0.0144` итогового Score только через severity-компонент, а при одновременном улучшении контура гари — ещё больше. Подробнее метрика описана в [критериях оценки](../description/Критерии_оценки_—_Мониторинг_природных_пожаров_КосмоХакатон_2026.pdf).
+Therefore, improving `IoU_1` from `0.306` to `0.45` will give approximately `+0.0144` of the final Score only through the severity component, and while improving the burn contour – even more. The metric is described in more detail in [evaluation criteria](../description/Критерии_оценки_—_Мониторинг_природных_пожаров_КосмоХакатон_2026.pdf).
 
-## 1. Сначала исправить валидацию
+## 1. Fix validation first
 
-Это важнее смены архитектуры.
+It's more important than changing architecture.
 
-### Разбиение
+### Breakdown
 
-Нельзя делать обычный случайный split по чипам или патчам:
+You can not do the usual random split on chips or patches:
 
-- сначала разделить чипы по `fire_event_id`;
-- только после этого нарезать патчи;
-- сделать отдельную time-shift валидацию: например, обучаться на 2019–2023 и проверяться на 2024;
-- если доступна география train, дополнительно оставить целый регион вне обучения.
+- First divide the chips by `fire_event_id`;
+- Only after that, cut the patches;
+- make a separate time-shift validation: for example, to study for 2019-2023 and be checked for 2024;
+- If the geography of the train is available, in addition, leave the entire region out of training.
 
-Private test целиком относится к 2025 году, поэтому случайная валидация почти наверняка завышает ожидаемый private score.
+The private test is all about 2025, so random validation almost certainly overstates the expected private score.
 
-### Метрики
+### Metrics
 
-Для BS-модуля следует сохранять модель по:
+For the BS-module, you should save the model for:
 
 ```text
 BSScore = 0.35 × IoU_burn + 0.30 × mIoU_sev
 ```
 
-При этом:
+At the same time:
 
 - `burn = target > 0`;
-- `mIoU_sev` считается только по классам 1–3;
-- TP, FP и FN суммируются по всем validation-чипам, а не усредняются по изображениям.
+- `mIoU_sev` is considered only in classes 1-3;
+- TP, FP and FN are summed up across all validation chips rather than being averaged across images.
 
-Не следует ориентироваться на общий F1 или mIoU с фоном. `F1-score=0.719...` из текущего лога нельзя сопоставить с официальным `F1_af`, пока неизвестно, как именно он вычисляется.
+Do not focus on the common F1 or mIoU with the background. `F1-score=0.719...` from the current log cannot be matched to the official `F1_af` until it is not known exactly how it is calculated.
 
-## 2. Разобрать, почему теряется класс 1
+## 2. Discover why Class 1 is lost
 
-Нужно построить confusion matrix и разделить ошибки класса 1 на несколько групп.
+You need to build a confusion matrix and divide class 1 errors into several groups.
 
-| Ошибка | Вероятная причина | Что делать |
+| Mistake | Probable cause | What do you do? |
 | --- | --- | --- |
-| `1 → 0` | Слабая гарь похожа на фон | Отдельная burn-head, oversampling слабых границ, landcover-aware dNBR |
-| `0 → 1` | Пашня, тени, фенология | SCL, hard negatives, NDVI/NDMI, более строгий burn threshold |
-| `1 → 2` | Один порог для разных покровов | Landcover и расстояния до landcover-specific порогов |
-| `2 → 1` | Модель недостаточно чувствительна к величине изменения | Ordinal loss, dNBR/RdNBR, signed band deltas |
+| `1 → 0` | Weak smoke looks like a background | Separate burn-head, oversampling weak borders, landcover-aware dNBR |
+| `0 → 1` | Arable land, shadows, phenology | SCL, hard negatives, NDVI/NDMI, more stringent burn threshold |
+| `1 → 2` | One threshold for different covers | Landcover and distances to landcover-specific thresholds |
+| `2 → 1` | The model is not sensitive enough to the magnitude of the change | Ordinal loss, dNBR/RdNBR, signed band deltas |
 
-Обязательно нужно посчитать precision и recall класса 1:
+Precision and recall of class 1 must be calculated:
 
-- низкий recall — модель не видит слабую гарь;
-- низкий precision — модель красит в класс 1 фон и сельскохозяйственные изменения;
-- оба показателя приемлемые, но IoU низкий — много ошибок по границам.
+- Low recall - the model does not see a weak burn;
+- Low precision – the model paints in class 1 background and agricultural changes;
+- Both indicators are acceptable, but IoU is low - many errors on the boundaries.
 
-Полезно сделать срезы IoU по:
+It is useful to make slices of IoU by:
 
-- типу земного покрова;
+- land-cover;
 - `cloud_frac`;
-- временному интервалу между `pre` и `post`;
-- году и сезону;
-- площади объекта;
-- границе и внутренней части гари;
-- значениям dNBR.
+- Time interval between `pre` and `post`;
+- year and season;
+- site;
+- boundary and interior;
+- dNBR.
 
-## 3. Обработка входных данных
+## 3. Processing of input data
 
 ### Sentinel-2
 
-Каналы B2–B12 приходят как `uint16` в масштабе `0–10000`:
+B2–B12 channels come as `uint16` on a `0–10000` scale:
 
 ```python
 reflectance = raw.astype("float32") / 10000.0
 reflectance = np.clip(reflectance, 0.0, 1.2)
 ```
 
-Нормализацию `mean/std` необходимо считать только по train-части текущего фолда. Не стоит делать независимую нормализацию каждого чипа: она способна удалить абсолютные различия между датами.
+Normalization of `mean/std` should be considered only on the train part of the current fold. It is not necessary to do independent normalization of each chip: it can remove absolute differences between dates.
 
-SCL не является числовым непрерывным каналом. Его следует:
+SCL is not a numerical continuous channel. It should be:
 
-- хранить как категорию;
-- преобразовать в one-hot либо embedding;
-- отдельно вывести маски `cloud`, `shadow`, `water`, `snow`, `invalid`;
-- при ресайзе применять только nearest-neighbor.
+- classify;
+- Convert to one-hot or embedding;
+- Separately display the masks `cloud`, `shadow`, `water`, `snow`, `invalid`;
+- Use only the nearest-neighbor.
 
 ### Sentinel-1
 
-Значения VV/VH имеют масштаб `×100`:
+VV/VH values have the `×100` scale:
 
 ```python
 sar_db = raw.astype("float32") / 100.0
 sar_db = np.clip(sar_db, -35.0, 5.0)
 ```
 
-После этого можно применить train mean/std. Полезны как абсолютные значения, так и разности `post - pre`.
+You can then use the train mean/std. Both absolute values and `post - pre` differences are useful.
 
-### Пропуски
+### Passes
 
-Для каждого источника данных нужно:
+For each data source, you need:
 
-1. Создать маску валидности.
-2. После нормализации заполнить невалидные значения нулём.
-3. Передать маску валидности в модель отдельным каналом.
+1. Create a mask of validity.
+2. After normalization, fill in invalid values with zero.
+3. Transmit the validity mask to the model by a separate channel.
 
-Просто заменять NaN нулём без mask-канала нельзя: модель примет отсутствие наблюдения за реальное значение.
+It is impossible to simply replace NaN with zero without a mask channel: the model will assume the absence of observation for the real value.
 
-### Метаданные
+### Metadata
 
-Можно использовать в качестве признаков:
+It can be used as signs:
 
 - `valid_frac`;
 - `cloud_frac`.
 
-Только для split, EDA и контроля качества следует использовать:
+Only split, EDA and quality control should be used:
 
-- даты;
+- date;
 - `fire_event_id`;
 - `sev1_px`, `sev2_px`, `sev3_px`;
 - `burn_area_ha`.
 
-Последние поля отсутствуют в test или являются прямой утечкой target.
+The last fields are missing from the test or are a direct target leak.
 
-## 4. Признаки для BS
+## 4. Signs for BS
 
-Начинать следует с компактного набора, не добавляя сразу десятки коррелирующих индексов.
+Start with a compact set, without adding dozens of correlated indices at once.
 
-### Спектральные индексы
+### Spectral indices
 
-Для каждой даты:
+For each date:
 
 ```text
 NBR  = (B8A - B12) / (B8A + B12 + ε)
@@ -156,7 +156,7 @@ NDVI = (B8A - B4)  / (B8A + B4  + ε)
 NDMI = (B8A - B11) / (B8A + B11 + ε)
 ```
 
-Между датами:
+Between dates:
 
 ```text
 dNBR  = NBR_pre  - NBR_post
@@ -165,78 +165,78 @@ dNDMI = NDMI_pre - NDMI_post
 RdNBR = dNBR / sqrt(abs(NBR_pre) + ε)
 ```
 
-`RdNBR` обязательно нужно ограничивать разумным диапазоном, иначе значения при `NBR_pre ≈ 0` станут аномально большими.
+`RdNBR` must be limited to a reasonable range, otherwise the `NBR_pre ≈ 0` values will become abnormally large.
 
-В модель стоит одновременно передавать:
+The model should be transferred simultaneously:
 
-- исходные `pre`;
-- исходные `post`;
+- reference `pre`;
+- reference `post`;
 - `post - pre`;
 - `abs(post - pre)`;
-- индексы обеих дат;
-- разности индексов.
+- indexes;
+- indexing.
 
-Signed difference показывает направление изменения, absolute difference — его величину.
+Signed difference shows the direction of change, absolute difference.
 
-### Самая важная фича для класса 1
+### The Most Important Feature for Class 1
 
-В эталонной разметке использовались разные границы dNBR для разных покровов:
+In the reference markup, different dNBR boundaries were used for different covers:
 
-| Покров | Границы dNBR |
+| Cover | DNBR boundaries |
 | --- | --- |
-| Лес/кустарник | `0.10 / 0.27 / 0.66` |
-| Травяной покров | `0.062 / 0.204 / 0.386` |
-| Пашня | `0.07 / 0.17 / 0.38` |
-| Болото/пойма | `0.075 / 0.331 / 0.677` |
+| Forest/shrubland | `0.10 / 0.27 / 0.66` |
+| Grass cover | `0.062 / 0.204 / 0.386` |
+| arable | `0.07 / 0.17 / 0.38` |
+| Swamp/plainland | `0.075 / 0.331 / 0.677` |
 
-Поэтому полезно добавить три канала расстояний до порогов:
+Therefore, it is useful to add three channels of distances to thresholds:
 
 ```python
 thresholds = threshold_lookup[landcover_group]  # H × W × 3
 threshold_distance = dnbr[..., None] - thresholds
 ```
 
-Это полезнее, чем просто передать dNBR: модель сразу видит, насколько пиксель выше или ниже границы конкретного класса для данного покрова.
+This is more useful than simply transmitting dNBR: the model immediately sees how much the pixel is above or below the boundary of a particular class for a given cover.
 
-Эти значения можно использовать как:
+These values can be used as:
 
-- дополнительные входные признаки;
-- prior для severity logits;
-- самостоятельный baseline для сравнения.
+- supplementary;
+- prior to severity logits;
+- independent baseline for comparison.
 
-Не стоит превращать пороги в финальное жёсткое решение: фенология, пашня, облака и дым создают ложные изменения.
+Do not turn the thresholds into a final hard decision: phenology, arable land, clouds and smoke create false changes.
 
 ### Sentinel-1
 
-Следует добавить:
+It should be added:
 
 - `VV_pre`, `VH_pre`;
 - `VV_post`, `VH_post`;
 - `ΔVV`, `ΔVH`;
-- `VH - VV` для обеих дат.
+- `VH - VV` for both dates.
 
-Для леса особенно полезно изменение VH, а для степи и пашни может быть информативнее VV. SAR лучше использовать как подтверждение оптики, а не как единственный источник контура.
+For the forest, a change in VH is especially useful, and for steppe and arable land it can be more informative than VV. SAR is better used as a confirmation of optics, rather than as the only source of contour.
 
-### Рельеф и покров
+### Relief and cover
 
-- elevation — стандартизировать;
-- slope — привести к стабильному диапазону;
-- aspect — кодировать как `sin(aspect)` и `cos(aspect)`;
-- landcover — one-hot или embedding;
-- дополнительно создать укрупнённые категории: лес, трава, пашня, вода, застройка, прочее.
+- elevation - standardize;
+- Slope – Lead to a stable range;
+- aspect - coded as `sin(aspect)` and `cos(aspect)`;
+- landcover - one-hot or embedding;
+- additionally create enlarged categories: forest, grass, arable land, water, development, etc.
 
-## 5. Разделить контур и severity
+## 5. Separate contour and severity
 
-Одна softmax-модель `0/1/2/3` заставляет слабую гарь одновременно:
+One softmax model `0/1/2/3` causes a weak fumes at the same time:
 
-1. Конкурировать с фоном.
-2. Конкурировать с классами 2 и 3.
+1. Competing with the background.
+2. Competing with Classes 2 and 3.
 
-Лучше сделать две головы.
+It's better to make two heads.
 
 ### Burn head
 
-Бинарная сегментация:
+Binary segmentation:
 
 ```python
 target_burn = target > 0
@@ -245,7 +245,7 @@ burn_logits = model.burn_head(features)
 
 ### Severity head
 
-Классы 1–3 только внутри настоящей гари:
+Classes 1–3 only inside a real burn:
 
 ```python
 severity_target = target[target_burn] - 1
@@ -255,7 +255,7 @@ severity_loss = cross_entropy(
 )
 ```
 
-### Декодирование
+### Decoding
 
 ```python
 p_burn = torch.sigmoid(burn_logits)
@@ -266,9 +266,9 @@ inside = p_burn > burn_threshold
 pred[inside] = severity_logits.argmax(dim=1)[inside] + 1
 ```
 
-Такое декодирование также гарантирует, что классы в submission не пересекаются.
+This decoding also ensures that classes in submission do not overlap.
 
-Хорошая стартовая функция потерь:
+A good start-up loss function:
 
 ```text
 L =
@@ -277,54 +277,54 @@ L =
 + 0.10 × OrdinalLoss
 ```
 
-Классы severity упорядочены: `1 < 2 < 3`. Дополнительная ordinal-loss помогает модели понимать, что ошибка `1 → 2` менее грубая, чем `1 → 3`.
+Classes of severity ordered: `1 < 2 < 3`. The optional ordinal-loss helps the model understand that the `1 → 2` error is less gross than `1 → 3`.
 
-Не следует начинать с больших inverse-frequency weights. Класс 1 не редкий, а класс 3, наоборот, редкий и уже распознаётся лучше.
+Do not start with large inverse-frequency weights. Class 1 is not rare, and class 3 is rare and already recognized better.
 
-## 6. Sampling и аугментации
+## 6. Sampling and augmentation
 
-Если 512×512 помещается в память, желательно обучаться на полных чипах хотя бы часть эпох. Если нужны crops, можно использовать такую смесь:
+If 512×512 is in memory, it is advisable to learn on full chips at least part of the era. If you need crops, you can use this mixture:
 
-- 40% — патчи с границей `фон ↔ класс 1`;
-- 25% — патчи со смешением классов `1 ↔ 2`;
-- 20% — hard negatives: пашня, вода, облачные тени;
-- 15% — случайные патчи.
+- 40% - patches with the `фон ↔ класс 1` border;
+- 25% – patches with `1 ↔ 2` class mixing;
+- 20% - hard negatives: arable land, water, cloud shadows;
+- 15% - random patches.
 
-После первого обучения нужно собрать FP/FN модели и провести второй этап hard-negative mining.
+After the first training, you need to collect FP/FN models and conduct the second stage of hard-negative mining.
 
-Безопасные аугментации:
+Safe augmentations:
 
-- горизонтальные и вертикальные отражения;
-- повороты на 90°;
-- небольшие согласованные изменения яркости;
-- слабый шум для SAR.
+- horizontal and vertical reflection;
+- 90° cornering;
+- small, consistent variations in brightness;
+- low-noise.
 
-Одна и та же геометрическая трансформация должна применяться к `pre`, `post`, SAR, auxiliary и mask.
+The same geometric transformation must be applied to `pre`, `post`, SAR, auxiliary and mask.
 
-Не стоит:
+Don't:
 
-- менять `pre` и `post` местами;
-- использовать сильный RGB color jitter;
-- интерполировать SCL/landcover билинейно;
-- применять сильные elastic distortions;
-- независимо и сильно менять спектральные каналы.
+- Change `pre` and `post` in places;
+- Use a strong RGB color jitter;
+- Interpolate SCL/landcover bilinearly;
+- Use strong elastic distortions;
+- Change the spectral channels independently and strongly.
 
-## 7. Подбор порогов после обучения
+## 7. Selection of thresholds after training
 
-На out-of-fold предсказаниях нужно подобрать:
+Out-of-fold predictions need to be made:
 
 - `burn_threshold`;
-- bias для класса 1;
-- bias для класса 2;
-- bias для класса 3.
+- bias in class 1;
+- bias in class 2;
+- bias in class 3.
 
-Оптимизировать следует pooled-метрику:
+Pooled metrics should be optimized:
 
 ```text
 0.35 × IoU_burn + 0.30 × mIoU_sev
 ```
 
-Пример диапазонов поиска:
+Example of search ranges:
 
 ```text
 burn_threshold: 0.30 … 0.70
@@ -333,13 +333,13 @@ bias_class_2:  -0.3 … +0.3
 bias_class_3:  -0.3 … +0.3
 ```
 
-Если класс 1 имеет низкий recall, положительный bias может помочь. Если низкий precision — потребуется hard-negative mining и/или более строгий burn threshold.
+If Class 1 has a low recall, positive bias can help. Low precision requires hard-negative mining and/or a more stringent burn threshold.
 
-Не следует применять агрессивное удаление маленьких компонент: слабая степень часто образует тонкую полосу по краю гари, и морфология первой уничтожает именно её.
+Aggressive removal of small components should not be used: a weak degree often forms a thin stripe along the edge of the burner, and the morphology of the first destroys it.
 
-## 8. Рекомендуемая очередь экспериментов
+## 8. Recommended line of experiments
 
-В каждом эксперименте необходимо фиксировать одинаковые split, seed и метрику.
+In each experiment, it is necessary to fix the same split, seed and metric.
 
 1. `Raw pre/post + U-Net`.
 2. `+ signed/absolute band differences`.
@@ -349,40 +349,40 @@ bias_class_3:  -0.3 … +0.3
 6. `+ SCL masks`.
 7. `+ Sentinel-1`.
 8. `+ DEM/slope/aspect`.
-9. Две головы: burn + severity.
+9. Two heads: burn + severity.
 10. Ordinal loss.
 11. Hard-negative mining.
 12. OOF threshold/logit calibration.
-13. Усреднение 2–3 моделей или fold ensemble.
+13. Averaging 2-3 models or fold ensemble.
 
-Максимальный вклад для класса 1 ожидается от пунктов 5, 9, 11 и 12.
+Maximum contribution for Class 1 is expected from paragraphs 5, 9, 11 and 12.
 
-## 9. AF-модуль
+## 9. AF module
 
-Даже очень хороший severity даёт только 30% итоговой метрики. Для AF критичны:
+Even a very good severity gives only 30% of the total metric. For AF critical:
 
 - `I4`;
 - `I5`;
 - `I4 - I5`;
-- локальные отклонения I4 и `I4 - I5` от фона в окнах разных размеров;
-- признак насыщения I4;
-- I3 для солнечного блика;
+- Local deviations of I4 and `I4 - I5` from the background in windows of different sizes;
+- saturation4;
+- I3 for solar glare;
 - landcover;
-- солнечный зенит и day/night;
-- маска валидности.
+- solar zenith and day/night;
+- validity-mask.
 
-Положительных AF-пикселей всего `0.035%`, поэтому обычная BCE по всем пикселям почти гарантированно научит фон. Нужны focal/Tversky loss, oversampling положительных кандидатов и hard negatives.
+Positive AF pixels of all `0.035%`, so a regular BCE on all pixels is almost guaranteed to teach the background. Need focal/Tversky loss, oversampling positive candidates and hard negatives.
 
-## Практический план ближайших итераций
+## Practical plan for the next iterations
 
-Если времени мало, оптимальный порядок действий такой:
+If time is short, the best course of action is:
 
-1. Реализовать правильный `GroupKFold` и официальный evaluator.
-2. Проанализировать confusion `1 → 0` против `1 → 2`.
-3. Добавить dNBR и landcover-specific threshold-distance features.
-4. Разделить модель на burn-head и severity-head.
-5. Добавить oversampling границы слабой гари.
-6. Подобрать burn threshold и class-1 bias по OOF.
-7. Только после этого добавлять Sentinel-1, новые архитектуры и ансамбли.
+1. Implement the correct `GroupKFold` and official evaluator.
+2. Analyze `1 → 0` Confusion vs. `1 → 2`.
+3. Add dNBR and landcover-specific threshold-distance features.
+4. Divide the model into burn-head and severity-head.
+5. Add oversampling to weak burn boundaries.
+6. Select the burn threshold and class-1 bias by OOF.
+7. Only then add Sentinel-1, new architectures and ensembles.
 
-В файле [«Ссылка на данные»](../description/Ссылка_на_данные.pdf) находится только ссылка на выдачу данных и первоначальное время публикации теста; дополнительных сведений о признаках в нём нет.
+In the file ["Reference to data"](../description/Ссылка_на_данные.pdf) is only a reference to the issuance of data and the initial time of publication of the test; there is no additional information about the features in it.

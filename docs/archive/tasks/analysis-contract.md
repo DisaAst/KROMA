@@ -1,75 +1,75 @@
-# Контракт анализа территории v1
+# Territory analysis contract v1
 
-Статус: **контракт v1 реализован** в Pydantic, TypeScript, REST и контрактных тестах. Встроенный пример имеет origin `synthetic_demo`; подключение реального `model_output` остаётся обязательным условием финальной приёмки WEB-002/012. Изменения контракта отражать одновременно во всех слоях и этом документе.
+Status: **contract v1 implemented** Pydantic, TypeScript, REST and Contract Tests. Built-in example has origin `synthetic_demo`; connection of real `model_output` remains a prerequisite for final acceptance WEB-002/012. Changes to the contract shall be reflected simultaneously in all layers and in this document.
 
-## 1. Минимальная модель взаимодействия
+## 1. Minimum model of interaction
 
-Для ограниченного подготовленного набора использовать синхронный REST API. Один запрос возвращает термоточки, зоны гарей, сводку и метаданные. Экспорт вызывает ту же серверную функцию с теми же параметрами.
+For a limited set, use the synchronous REST API. One query returns hotspots, hare zones, summary and metadata. Exports call for the same server function with the same parameters.
 
-Не требуются фоновые jobs, произвольный пользовательский upload или запуск обучения. При превышении документированных лимитов возвращать понятную ошибку, а не обрезанный результат под видом полного.
+No background jobs, arbitrary user upload or start-up training required. If you exceed documented limits, return an understandable error, and not a cropped result under the guise of a complete one.
 
-## 2. Параметры запроса
+## 2. Request parameters
 
-| Поле | Формат | Правило |
+| Field | Format | Rule |
 | --- | --- | --- |
-| `dataset_id` | string | ID подготовленного набора из каталога |
-| `dataset_version` | string | Обязательная неизменяемая версия; не подставлять новую версию молча |
-| `bbox` | `minLon,minLat,maxLon,maxLat` | WGS84, порядок longitude/latitude, положительные ширина и высота |
-| `from` | `YYYY-MM-DD` | Первый включённый календарный день UTC |
-| `to` | `YYYY-MM-DD` | Последний включённый календарный день UTC |
+| `dataset_id` | string | ID of the prepared set from the catalog |
+| `dataset_version` | string | Mandatory immutable version; do not substitute a new version silently |
+| `bbox` | `minLon,minLat,maxLon,maxLat` | WGS84, longitude/latitude order, positive width and height |
+| `from` | `YYYY-MM-DD` | First Included UTC Calendar Day |
+| `to` | `YYYY-MM-DD` | Last included calendar day of UTC |
 
-Сервер нормализует даты в `[from 00:00 UTC, to + 1 день 00:00 UTC)`. `from <= to`. Минимальная версия не поддерживает bbox через антимеридиан. Координаты конечные, без NaN/Infinity, в допустимых пределах. Точность пользовательской области не округлять до трёх знаков, как в существующем viewport-клиенте.
+The server normalizes dates in `[from 00:00 UTC, to + 1 день 00:00 UTC)`. `from <= to`. Minimum version does not support bbox via antimeridian. finite coordinates, without NaN/Infinity, within acceptable limits. The accuracy of the user area is not rounded to three characters, as in an existing viewport client.
 
-Для точки использовать `acquired_at`. Точки на границе bbox включать, повторные записи с одинаковым ID исключать.
+For the point to use `acquired_at`. Points on the boundary of bbox include, repeated records with the same ID exclude.
 
-Для гари в v1 использовать **дату послепожарного снимка `after_acquired_at`**, по которому выполнено картирование. Она должна попадать в период. В UI и справке явно написать: «Гари отобраны по дате послепожарной съёмки; это не дата начала пожара». Это выбранная продуктовая семантика, а не утверждение, что критерии требуют именно её. Если команда выберет другой подход в WEB-001, заменить правило во всех слоях и тестах до интеграции.
+For burns in v1 use **Date of the `after_acquired_at` post-fire image**, mapping. She should be in the period. In the UI and the certificate explicitly write: "Gari are selected by the date of post-fire shooting; this is not the date of the start of the fire". This is the product semantics chosen, not the statement that the criteria require it. If the team chooses a different approach in WEB-001, replace the rule in all layers and tests before integration.
 
-Если одна гарь оценена несколькими подходящими сценами, использовать последнюю полную оценку одного `burn_event_id` в выбранном периоде. Не суммировать несколько снимков одной площади. Не объединять автоматически частичные оценки как полные: manifest обязан описывать их покрытие и правило сборки, иначе такой набор пока не поддерживается. Отсутствующие даты не подменять текущим временем.
+If one hare is rated by several suitable scenes, use the last full score of one `burn_event_id` in the selected period. Do not add up several pictures of the same area. Do not automatically combine partial estimates as complete: manifest must describe their coverage and build rule, otherwise such a set is not yet supported. Missing dates should not be replaced by current time.
 
-## 3. Подготовленный набор
+## 3. Prepared set
 
-Manifest содержит:
+Manifest contains:
 
-- `dataset_id`, `dataset_version`, название, описание и фиксированный пространственный охват.
-- Доступный период и список сцен: реальные ID, спутник, время съёмки, footprint, облачность/валидность, если известны.
-- `origin`: `model_output`, `reference` или `synthetic_demo`. Отдельно хранить название внешнего источника наблюдений; не выдавать FIRMS за собственную модель.
-- Версию алгоритма/весов или идентификатор запуска, способ получения результатов.
-- Исходную CRS, affine transform/разрешение маски, nodata, классы `0/1/2/3` и маску валидности, если применимо.
-- Пути к локальным артефактам, контрольные суммы и правило загрузки/монтирования.
-- Лицензию, attribution и ограничения на распространение.
-- Связь `burn_event_id → assessment_id → scene_ids`; не выдумывать такую связь для произвольных несвязанных чипов.
+- `dataset_id`, `dataset_version`, name, description and fixed spatial coverage.
+- Available period and scene list: real ID, satellite, shooting time, footprint, cloudiness/validity, if known.
+- `origin`: `model_output`, `reference` or `synthetic_demo`. Separately store the name of the external source of observations; do not pass FIRMS as your own model.
+- Algorithm/weight version or launch identifier, method of obtaining results.
+- Initial CRS, affine transform/mask resolution, nodata, `0/1/2/3` classes and validity mask, if applicable.
+- Ways to Local Artifacts, Checksums and the Load/mount Rule.
+- License, Attribution and Distribution Restrictions.
+- `burn_event_id → assessment_id → scene_ids` communication; do not invent such a connection for arbitrary unrelated chips.
 
-Демонстрация результатов модели использует `model_output`. Эталонные маски и синтетические фикстуры пригодны для проверок, но маркируются и не выдаются за результат модели.
+Demonstration of model results using `model_output`. Reference masks and synthetic fixtures are suitable for inspection, but are marked and not issued as a result of the model.
 
-## 4. Площадь и геометрии
+## 4. Area and geometry
 
-- Маска BS: `0` — вне гари, `1` — слабая, `2` — средняя, `3` — сильная степень поражения; nodata/облачность не равны классу 0.
-- Векторизовать классы с сохранением отверстий и нескольких компонент. Поддержать Polygon и MultiPolygon.
-- Пересечь геометрии с областью запроса; считать площадь только получившихся частей, а не целых пересекающихся гарей.
-- Между классами не должно быть положительной площади пересечения. Повторяющиеся результаты разных сцен не должны удваивать площадь.
-- Для фиксированного набора выбрать и документировать подходящую метрическую/равноплощадную CRS; bbox перевести в неё до обрезки и расчёта. Не считать гектары по градусам или экранным пикселям Web Mercator.
-- Площадь = площадь корректной обрезанной геометрии в м² / 10 000. Проверить её согласованность с исходной маской и её геопривязкой. Правило для частично пересечённых пикселей — геометрическое пересечение их векторизованных границ.
-- Наружу отдавать геометрии WGS84 longitude/latitude. В стандартный GeoJSON не добавлять устаревшее поле `crs`; описание CRS расчёта хранить в метаданных JSON/справки.
-- Не округлять до целых гектаров внутри расчёта. UI может округлять для чтения; API и экспорт сохраняют не менее 6 десятичных знаков, если используется десятичное округление.
-- Общая площадь — сумма площадей неперекрывающихся зон трёх классов. Полный контур гари не добавлять к этой сумме повторно.
+- Mask BS: `0` - non-smoking, `1` - weak, `2` - medium, `3` - strong degree of damage; nodata / cloud is not equal to class 0.
+- Vectorize classes with preservation of holes and several components. Support Polygon and MultiPolygon.
+- Cross geometry with the query area; count the area only of the resulting parts, not entire intersecting hares.
+- There should be no positive intersection between classes. Repetitive results of different scenes should not double the area.
+- For a fixed set, select and document a suitable metric/equal-area CRS; bbox translate to it prior to trimming and calculation. Do not count hectare by degrees or screen pixels Web Mercator.
+- Area = area of correct cropped geometry in m2 / 10 000. Check its consistency with the original mask and its georeference. The rule for partially crossed pixels is the geometric intersection of their vectored boundaries.
+- WGS84 longitude/latitude geometry. Do not add an outdated `crs` field to standard GeoJSON; store the calculation CRS description in JSON metadata/help.
+- Do not round to whole hectares within the calculation. UI can be rounded up for reading; API and export retain at least 6 decimal places if decimal rounding is used.
+- Total area - the sum of the areas of non-overlapping zones of three classes. Do not add the full contour of burns to this amount again.
 
-## 5. Каталог и endpoints
+## 5. Catalogue and endpoints
 
-| Метод | Путь | Результат |
+| Method | Pathway | The result |
 | --- | --- | --- |
-| GET | `/api/v1/analysis/datasets` | Доступные версии, охват, даты, источник, ограничения и подсказки для примера |
-| GET | `/api/v1/analysis` | Один согласованный результат по обязательным параметрам |
-| GET | `/api/v1/analysis/export/contours` | GeoJSON зон по тем же параметрам |
-| GET | `/api/v1/analysis/export/report?format=csv` | CSV-справка по тем же параметрам |
-| GET | `/api/v1/analysis/export/report?format=json` | JSON-справка и метаданные по тем же параметрам |
+| GET | `/api/v1/analysis/datasets` | Available versions, coverage, dates, source, limitations and hints for example |
+| GET | `/api/v1/analysis` | One agreed result on mandatory parameters |
+| GET | `/api/v1/analysis/export/contours` | GeoJSON zones according to the same parameters |
+| GET | `/api/v1/analysis/export/report?format=csv` | CSV reference for the same parameters |
+| GET | `/api/v1/analysis/export/report?format=json` | JSON reference and metadata for the same parameters |
 
-Путь экспорта получает все параметры из раздела 2; `format` — дополнительный параметр только справки. В запрос экспорта также передавать `expected_result_id`, чтобы сервер обнаруживал несоответствие показанному результату и не скачивал другие данные молча.
+Export path receives all parameters from section 2; `format` - additional parameter only reference. In the export request, also transmit `expected_result_id` so that the server detects a discrepancy with the result shown and does not download other data silently.
 
-Старые endpoints сохраняются до явной миграции. Не менять их семантику скрыто ради нового экрана.
+Old endpoints persist until apparent migration. Do not change their semantics hidden for the sake of a new screen.
 
-## 6. Ответ анализа
+## 6. Response to analysis
 
-Минимальные поля:
+Minimum fields:
 
 ```text
 schema_version
@@ -92,60 +92,60 @@ calculation: area_method, area_crs, clipping_rule, deduplication_rule
 generated_at
 ```
 
-`result_id` детерминирован по нормализованному запросу, контрольным суммам данных, версии схемы и обработки. `generated_at` не участвует в идентификаторе. Cache не должен быть единственным хранилищем запроса: его повторяют по полному набору параметров, и после рестарта результат восстанавливается из неизменяемого набора.
+`result_id` is determined by normalized request, data checksums, schema version and processing. `generated_at` is not involved in the identifier. Cache should not be the only query repository: it is repeated on a full set of parameters, and after restarting the result is restored from an immutable set.
 
-Для валидно обследованной области без обнаружений: `empty`, нулевые площади/счётчики, три класса с нулевой площадью, пустые коллекции, `share=null` при нулевой общей площади.
+For a validly surveyed area without detection: `empty`, zero areas/counters, three classes with zero area, empty collections, `share=null` at zero total area.
 
-Для отсутствия покрытия/валидных пикселей: соответствующий статус, недоступные площади и доли `null`, а не утверждение о нулевом выгорании. У термоточек и BS может быть разное покрытие: сообщать ограничения каждого источника, не прятать доступный результат одного за недоступностью другого. WEB-001 уточняет отдельные поля покрытия источников при формализации схемы.
+For no coverage/valid pixels: appropriate status, inaccessible areas and `null` fractions, not zero burnout statement. Thermopoints and BS can have different coatings: communicate the limitations of each source, do not hide the available result of one behind the inaccessibility of the other. WEB-001 clarifies individual source coverage fields when formalizing the scheme.
 
-Для частичного покрытия считать только доступную валидную часть, выводить предупреждение и размер обследованной площади. Не экстраполировать на весь bbox.
+For partial coverage, consider only the available valid part, display a warning and the size of the examined area. Don't extrapolate to the whole bbox.
 
-Если связь наблюдений с гарями не установлена, не выдавать число кластеров термоточек за `burn_scar_count`.
+If the connection of observations with smokes is not established, do not give the number of clusters of thermal points for `burn_scar_count`.
 
-## 7. Атрибуты GeoJSON
+## 7. GeoJSON attributes
 
-Каждая feature экспортируемого слоя — зона одного класса, не одновременно полный контур и его дочерние зоны:
+Each feature of the exported layer is a zone of one class, not at the same time a complete contour and its daughter zones:
 
-| Атрибут | Назначение |
+| Attribute | Appointment |
 | --- | --- |
-| `id` / `feature.id` | Уникальный стабильный ID зоны в данном результате |
-| `burn_event_id` | Идентификатор гари/события для группировки |
-| `assessment_id` | Идентификатор выбранной оценки |
-| `class_id` | 1, 2 или 3 |
+| `id` / `feature.id` | Unique stable zone ID as a result |
+| `burn_event_id` | Gary/event identifier for grouping |
+| `assessment_id` | Identifier of the selected assessment |
+| `class_id` | 1, 2 or 3 |
 | `severity` | `low`, `moderate`, `high` |
-| `area_ha` | Площадь экспортированной, уже обрезанной геометрии |
-| `after_acquired_at` | Дата/время снимка, определяющего временной отбор |
-| `dataset_id`, `dataset_version` | Источник результата |
-| `result_id` | Связь с картой и справкой |
+| `area_ha` | Area of Exported, Already Cut Geometry |
+| `after_acquired_at` | Date/time of the image determining the time selection |
+| `dataset_id`, `dataset_version` | Source |
+| `result_id` | Link to map and reference |
 
-Если одна зона распадается на части, использовать MultiPolygon или отдельные уникальные ID частей; зафиксировать выбранный вариант. `burn_scar_count` считается по уникальным гарям с ненулевым пересечением, не по числу частей.
+If one zone splits into parts, use MultiPolygon or separate unique ID parts; fix the selected option. `burn_scar_count` is considered for unique non-zero intersection, not by the number of parts.
 
-Термоточки должны иметь хотя бы ID, время, источник и координаты. Дополнительные confidence/FRP выводить только если они есть; не интерпретировать FRP как площадь.
+Thermometers must have at least an ID, time, source and coordinates. Extra confidence/FRP output only if available; do not interpret FRP as an area.
 
-## 8. CSV/JSON-справка
+## 8. CSV/JSON reference
 
-CSV: UTF-8, документированный разделитель, десятичная точка, стандартное экранирование полей. Одна строка `total` и три строки `severity`; колонки включают тип строки, class_id, название, area_ha, share, counts и метаданные запроса/источника/result_id. Общую строку явно отличать от классов, чтобы потребитель не суммировал итог повторно.
+CSV: UTF-8, documented separator, decimal point, standard field shielding. One `total` line and three `severity` lines; columns include string type, class_id, name, area_ha, share, counts and request/source/result_id metadata. The general string is clearly distinguished from classes, so that the consumer does not resume the result.
 
-Обязательные метаданные: bbox, from/to и UTC, версия набора и обработки, правило временного отбора, CRS/метод расчёта, статус покрытия и предупреждения. JSON сохраняет структурированные метаданные. Для CSV определить безопасное представление списка сцен/предупреждений и объяснить пустые значения, соответствующие `null`.
+Mandatory metadata: bbox, from/to and UTC, typing and processing version, time selection rule, CRS/calculation method, coverage status and warnings. JSON retains structured metadata. For the CSV, determine a safe representation of a list of scenes/warnings and explain the blank values corresponding to `null`.
 
-Имя файла безопасное и воспроизводимое, например `kroma-<dataset>-<from>-<to>-<result-id-prefix>.geojson`. Экспорт отдаёт подходящий Content-Type и Content-Disposition. Не использовать пользовательскую строку напрямую как путь на диске.
+The file name is secure and reproducible, such as `kroma-<dataset>-<from>-<to>-<result-id-prefix>.geojson`. Exports give a suitable content type and content-disposition. Do not use the user string directly as a path on the disk.
 
-## 9. Ошибки и ограничения
+## 9. Mistakes and limitations
 
-- `422`: неверные координаты, даты, формат или документированный лимит запроса.
-- `404`: неизвестный набор/версия.
-- `409`: `expected_result_id` не совпадает с текущим расчётом.
-- `503`: набор известен, но его артефакты недоступны/не прошли проверку целостности.
-- Валидный запрос без пересечений — `200` с `no_coverage`, а не необъяснимая ошибка сервера.
-- Внутренние ошибки не раскрывают локальные пути/секреты. Фронт получает код и понятное сообщение.
+- `422`: Incorrect coordinates, dates, format or documented query limit.
+- `404`: Unknown set/version.
+- `409`: `expected_result_id` does not match the current calculation.
+- `503`: the set is known, but its artifacts are inaccessible/failed integrity testing.
+- Valid query without intersections is `200` with `no_coverage`, not an unexplained server error.
+- Internal errors do not reveal local paths/secrets. Front receives code and understandable message.
 
-Лимиты конфигурируются: `KROMA_ANALYSIS_MAX_DAYS=366`, `KROMA_ANALYSIS_MAX_AREA_HA=5000000`, `KROMA_ANALYSIS_MAX_FEATURES=50000`. При превышении сервер возвращает 422 без молчаливой обрезки. Внутренний ориентир: один типовой анализ не дольше 10 секунд после старта сервиса; это инженерная цель команды, не числовой порог из критериев.
+Limits are configured: `KROMA_ANALYSIS_MAX_DAYS=366`, `KROMA_ANALYSIS_MAX_AREA_HA=5000000`, `KROMA_ANALYSIS_MAX_FEATURES=50000`. If exceeded, the server returns 422 without silent trimming. Internal benchmark: one sample analysis no longer than 10 seconds after service start; this is the team's engineering goal, not the numerical threshold of the criteria.
 
-## 10. Инварианты
+## 10. Invariants
 
-1. Карта, справка, GeoJSON и CSV/JSON имеют один `result_id` и параметры запроса.
-2. Сумма площадей классов совпадает с общей площадью; сумма атрибутов зон — с соответствующим классом.
-3. Геометрии разных классов не перекрываются по площади, находятся внутри AOI и валидны.
-4. Повторный запрос и рестарт на той же версии не меняют геометрии, числа и `result_id`.
-5. Пустое наблюдение, отсутствие покрытия и отсутствие валидных пикселей различимы.
-6. Расчёт не зависит от масштаба карты, темы, положения камеры или округлённых подписей UI.
+1. Map, Help, GeoJSON and CSV/JSON have one `result_id` and query settings.
+2. The sum of the area of classes coincides with the total area; the sum of the attributes of zones – with the corresponding class.
+3. The geometries of different classes do not overlap in area, are inside the AOI and are valid.
+4. Repeated query and restart on the same version do not change geometry, numbers and `result_id`.
+5. Empty observation, lack of coverage and absence of valid pixels are distinguishable.
+6. Calculation is independent of map scale, theme, camera position or rounded UI signatures.

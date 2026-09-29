@@ -1,18 +1,18 @@
-# Данные
+# Data data
 
-Данные хранятся локально и исключены из Git. Скрипты создают `raw/` для исходных загрузок, `interim/` для нормализованных наблюдений и `samples/` для исследовательской выборки.
+Data is stored locally and excluded from Git. Scripts create `raw/` for initial downloads, `interim/` for normalized observations and `samples/` for research sampling.
 
 ## fire-aoi/
 
-Конкурсная территория мониторинга из [Мониторинг DATA](https://disk.yandex.ru/d/-rpmevTflbXZQg):
+Competitive monitoring area from [DATA monitoring](https://disk.yandex.ru/d/-rpmevTflbXZQg):
 
-- `fire_monitoring_aoi.geojson` — АОИ «Нижнее Поволжье и Подонье» + зоны UTM 37N/38N (в git)
-- копия для карты: `frontend/public/data/fire_monitoring_aoi.geojson`
-- локально (не в git): `.gpkg`, `_shapefile.zip`
+- `fire_monitoring_aoi.geojson` - AOI "Lower Volga and Podonie" + zones UTM 37N/38N (in git))
+- map copy: `frontend/public/data/fire_monitoring_aoi.geojson`
+- locally (not in git): `.gpkg`, `_shapefile.zip`
 
-Регионы в UI/API: субъекты АОИ (Ростовская, Волгоградская, Астраханская, Саратовская, Калмыкия) + демо-сценарий Сибири.
+Regions in UI/API: IDF subjects (Rostov, Volgograd, Astrakhan, Saratov, Kalmykia) + demo scenario of Siberia.
 
-Обновить:
+Update:
 
 ```bash
 bash scripts/download_monitoring_data.sh          # AOI
@@ -20,22 +20,22 @@ bash scripts/download_monitoring_data.sh --with-tars
 python3 scripts/ingest_monitoring_chips.py        # footprints train → карта
 ```
 
-На карте: слой «Чипы датасета (train)» — footprints с реальной UTM-привязкой.
-Test-чипы без геопривязки на карту не кладутся.
+On the map: a layer of “dataset chips (train)” – footprints with real UTM binding.
+Test chips without geo-reference are not placed on the map.
 
 ## yandex/
 
-Сюда складываются `fire-test-renamed.tar` / `fire-train-renamed.tar` (не в git):
+Here add `fire-test-renamed.tar`/`fire-train-renamed.tar` (not in git)):
 
 ```bash
 bash scripts/download_monitoring_data.sh --with-tars
 ```
 
-Это ML-чипы AF/BS — не live-слой карты. На карту сервиса переносится только `fire-aoi`.
+This is an AF/BS ML chip, not a live card layer. Only `fire-aoi` is transferred to the service map.
 
-## Официальные train/test (локально, не в git)
+## Official train/test (locally, not in git))
 
-ML-код и сервис ожидают такую раскладку (пути настраиваются переменными окружения `KROMA_AF_ROOT`, `KROMA_BS_ROOT`):
+The ML code and service are waiting for this layout (paths are configured by the `KROMA_AF_ROOT`, `KROMA_BS_ROOT` environment variables)):
 
 ```text
 data/Мониторинг DATA/train/af/{meta.csv,viirs/,aux/,masks/}   # 420 AF-чипов
@@ -43,4 +43,4 @@ data/Мониторинг DATA/train/bs/{meta.csv,sentinel2_pre/,sentinel2_post/
 data/test/{meta.csv,sample_submission.csv,af/,bs/}            # 180 AF + 89 BS, без меток и без геопривязки
 ```
 
-Test-чипы не геопривязываются и не показываются на карте; train-чипы имеют UTM-привязку в `meta.csv`.
+Test chips are not georeferenced or shown on a map; train chips have UTM binding in `meta.csv`.

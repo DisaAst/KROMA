@@ -1,63 +1,63 @@
-# WEB-010. Автоматические и ручные проверки веб-сценария
+# WEB-010. Automatic and manual web script checks
 
-Статус: DONE для fixture; повторить на real/model_output. Приоритет: P1, тесты разрабатывать с P0-задачами. Область: QA, frontend, backend, geo. Критерии: R1, R2, R3.
+Status: DONE for fixture; repeat to real/model_output. Priority: P1, develop tests with P0 tasks. Area: QA, frontend, backend, geo. Criteria: R1, R2, R3.
 
-Зависимости: WEB-001–009; тестовые scaffolds и fixtures можно создавать раньше. Финальное закрытие после интеграции.
+Dependencies: WEB-001-009; test scaffolds and fixtures can be created earlier. Final Closing After Integration.
 
-## Цель
+## Purpose
 
-Доказать не только открытие страниц, но и согласованность пространственного запроса, геометрий, площадей, отображения и файлов. Существующие тесты API/форматирования не проверяют весь новый сценарий.
+Prove not only the opening of pages, but also the consistency of spatial query, geometries, areas, display and files. Existing API/format tests don't test the entire new scenario.
 
-## Наборы для проверок
+## Check kits
 
-1. Малые синтетические, с вручную проверяемой геометрией/площадью: нужны для точных unit/integration-тестов.
-2. Подготовленный результат реальных сцен: нужен для воспроизводимой приёмки и демонстрации.
-3. Ошибочные fixtures: пересечение классов, неизвестная CRS, отсутствующий файл, неверные классы/даты.
+1. Small synthetic, hand-tested geometry/area: needed for precise unit/integration tests.
+2. Prepared result of real scenes: necessary for reproducible acceptance and demonstration.
+3. Error fixtures: Class intersection, unknown CRS, missing file, incorrect classes/dates.
 
-Ожидаемые площади нельзя получать тем же тестируемым методом и считать независимым доказательством: использовать аналитические фигуры/пиксельные маски и отдельный геопересчёт.
+Expected areas can not be obtained by the same test method and considered independent evidence: use analytical figures / pixel masks and a separate geo-calculation.
 
-## Матрица обязательных проверок
+## Matrix of mandatory inspections
 
-| Область | Сценарий | Ожидаемое поведение |
+| The Domain | Script | Expected behaviour |
 | --- | --- | --- |
-| Запрос | Один день, правая граница UTC | Правильная включённость/исключение наблюдений |
-| Запрос | Неверная дата, NaN, инвертированный/нулевой bbox | 422, понятная ошибка UI |
-| Отбор | Смена bbox или дат | Меняются все связанные представления, не только точки |
-| Геометрия | Частичное пересечение и касание | Только площадь внутри AOI; касание не добавляет площадь |
-| Геометрия | Отверстия, MultiPolygon, три класса | Корректный рендеринг и площадь, нет пересечения классов |
-| Данные | Несколько оценок одной гари | Применяется выбранное правило, нет удвоения |
-| Данные | Нет обнаружений при валидном покрытии | Нули, status empty, корректный пустой экспорт |
-| Данные | Нет покрытия/валидных BS-пикселей | Явный статус, недоступные площади null, не ложные нули |
-| Данные | Есть AF, нет BS; есть BS, нет AF | Доступная часть результата сохраняется с ограничениями |
-| Версии | Тот же запрос после рестарта | Те же числа, геометрии и result_id |
-| Версии | Старый expected_result_id | 409, нет скачивания несоответствующего файла |
-| Экспорт | GeoJSON/CSV/JSON | Парсится, имеет атрибуты, совпадает с результатом |
-| UI | Черновик изменён после расчёта | Отчёт/экспорт относятся к последнему применённому запросу |
-| UI | Ответы запросов пришли в обратном порядке | Старый ответ не затирает новый |
-| UI | Прямая ссылка, reload, назад/вперёд | Восстанавливается согласованный запрос/результат |
-| Доступность | Клавиатура, фокус, поля, кнопки | Основной сценарий доступен без рисования мышью |
-| Надёжность | Тайлы недоступны | Справка и экспорт работают, карта объясняет проблему |
-| Регрессии | Обзор, события, таймлайн, темы | Старый функционал продолжает работать |
+| Request | One day, right boundary of UTC | Correct inclusion/exclusion of observations |
+| Request | Incorrect date, NaN, inverted/zero bbox | 422, understandable UI error |
+| Selection | Changing bbox or dates | All related ideas are changing, not just points |
+| Geometry | Partial intersection and touch | Only the area inside the AOI; touching does not add area |
+| Geometry | Holes, MultiPolygon, three classes | Correct rendering and area, no intersection of classes |
+| Data data | Several evaluations of one gari | Selected rule applies, no doubling |
+| Data data | No detections with valid coating | Zero, Status Empty, Correct Exports |
+| Data data | No coverage/valid BS pixels | Explicit status, inaccessible null areas, not false zeros |
+| Data data | There's AF, no BS; there's BS, no AF | Available part of the result is maintained with limitations |
+| Versions | Same request after restart | Same numbers, geometry and result_id |
+| Versions | Old expected_result_id | 409, no download of inappropriate file |
+| Exports | GeoJSON/CSV/JSON | Parses, has attributes, matches the result |
+| UI | Draft changed after calculation | Report/Export refers to the last request applied |
+| UI | Responses to requests came in reverse order | The old answer doesn't wipe out the new one |
+| UI | Direct link, reload, back/forward | Agreed request/result is restored |
+| Availability | Keyboard, focus, fields, buttons | The main scenario is available without drawing a mouse |
+| Reliability | Tails inaccessible | Reference and export work, the map explains the problem |
+| Regression | Review, events, timeline, topics | The old functionality continues to work |
 
-## Что сделать
+## What to do
 
-- Geo unit-тесты в `tests/geo/`: векторизация/обрезка, CRS, площади и валидность.
-- Backend integration/contract-тесты в `tests/backend/`: query, errors, versions, экспорт, cache/restart semantics.
-- Frontend unit/component-тесты: состояние формы, null/zero, форматирование, применение запроса, ошибки.
-- Сквозной браузерный сценарий: выбор примера → запрос → слои/справка → скачивание → проверка файлов. Добавить отдельный E2E runner/конфигурацию при необходимости; не утверждать, что такой runner уже есть.
-- Проверки обеих тем на 390/768/1280/1440 px, tooltip/popover у края, zoom браузера и табуляция.
-- Добавить проверки нового кода в CI. Реальные тяжёлые/ограниченные данные не делать обязательной сетевой зависимостью каждого CI-прогона.
-- Зафиксировать ручной протокол для реального набора с версиями, входными параметрами, ожидаемыми числами и итогом.
+- Geo Unit Tests in `tests/geo/`: Vectorization/Pruning, CRS, Area and Validity.
+- Backend integration/contract tests in `tests/backend/`: query, errors, versions, export, cache/restart semantics.
+- Frontend unit/component tests: form state, null/zero, formatting, request application, errors.
+- End-to-end browser scenario: Selecting an example of → request → layers/→ help download → check files. Add a separate E2E runner/configuration if necessary; do not claim that such a runner already exists.
+- Check both themes at 390/768/1280/1440 px, tooltip/popover at the edge, browser zoom and tab.
+- Add new code checks to CI. Real heavy/limited data is not necessarily a network dependency for every CI run.
+- Lock the manual protocol for a real set with versions, input parameters, expected numbers and total.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] Матрица покрыта автоматикой или явно описанной ручной проверкой; пропусков без объяснения нет.
-- [ ] Карта, API, CSV/JSON и GeoJSON прошли сверку по одному result_id.
-- [ ] Для геометрии есть независимые ожидаемые значения, не только snapshot текущей реализации.
-- [ ] Lint/typecheck/unit/build, backend pytest/ruff и новые тесты проходят.
-- [ ] Зафиксирован реальный замер времени типового анализа и экспорта.
-- [ ] Ошибки и ограничения не маскируются под успешный результат.
+- [ ] Matrix covered with automation or explicitly described manual check; no passes without explanation.
+- [ ] Map, API, CSV/JSON and GeoJSON were reconciled by one result_id.
+- [ ] For geometry, there are independent expected values, not just snapshot current implementations.
+- [ ] Lint/typecheck/unit/build, backend pytest/ruff and new tests pass.
+- [ ] Real time measurement of typical analysis and export is recorded.
+- [ ] Mistakes and limitations are not masquerading as successful results.
 
-## Вне задачи
+## Outside the task
 
-Доказательство качества ML на private-выборке, нагрузочные испытания для промышленного масштаба и performance-баллы конкурсного инференса. Скорость веб-запроса не равна скорости `submission.csv`.
+Proof of ML quality on a private sample, load tests for industrial scale and performance scores of competitive inferencing. The speed of a web request is not equal to the speed of `submission.csv`.

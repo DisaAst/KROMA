@@ -1,48 +1,48 @@
-# WEB-004. Единый REST API анализа территории
+# WEB-004. Unified REST API for territory analysis
 
-Статус: DONE (19.09.2026). Приоритет: P0. Область: backend. Критерии: R1, R2, R3.
+Status: DONE (19.09.2026)). Priority: P0. Area: backend. Criteria: R1, R2, R3.
 
-Зависимости: WEB-001, WEB-002, WEB-003. Разблокирует полноценную интеграцию WEB-005–008.
+Dependencies: WEB-001, WEB-002, WEB-003. Unlocks the full integration of WEB-005-008.
 
-## Цель
+## Purpose
 
-По одному пространственно-временному запросу получить согласованный результат для карты, справки и выгрузки. REST должен работать без браузера и без ручных действий на сервере.
+For one space-time request to obtain an agreed result for the map, reference and unloading. REST should work without a browser and without manual actions on the server.
 
-## Что сделать
+## What to do
 
-1. Реализовать каталог `/api/v1/analysis/datasets` и `/api/v1/analysis` по [контракту](analysis-contract.md).
-2. Вынести общий `AnalysisService`: нормализация запроса → выбор данных/оценок → фильтрация точек → пересечение зон → площади/сводка → provenance/coverage/result_id.
-3. Не собирать новую справку из существующих случайно сгенерированных weekly stats. Единственный источник итогов — обработанный набор зон.
-4. Различать доступность термоточек и BS; корректно возвращать частичный результат с предупреждением.
-5. Валидировать bbox, даты, dataset version и лимиты. Не возвращать все данные при неизвестном/проигнорированном фильтре.
-6. Сделать deterministic result ID и сортировку результатов. Любой кэш ключевать полным нормализованным запросом и версией обработки.
-7. Добавить диагностические логи: request/result ID, версия набора, длительность, counts, тип ошибки. Не логировать секреты и объёмные исходные артефакты.
-8. Описать запросы/ответы и ошибки в OpenAPI с пригодными примерами.
-9. Сохранить существующие endpoints и режимы; новый сервис использует отдельный подготовленный repository.
-10. Измерить холодный/повторный запрос на демонстрационном наборе. Зафиксировать лимиты/таймауты; при необходимости оптимизировать чтение и кэш, прежде чем вводить background jobs.
+1. Implement the `/api/v1/analysis/datasets` and `/api/v1/analysis` directory [contract](analysis-contract.md).
+2. Delete general `AnalysisService`: normalization of the → query selection of data/estimates → filtering of → points intersection of zones → area/→ summary provenance/coverage/result_id.
+3. Do not collect new help from existing randomly generated weekly stats. The only source of results is the processed set of zones.
+4. Distinguish between the availability of hotspots and BS; correctly return a partial result with a warning.
+5. Validate bbox, dates, dataset version and limits. Do not return all data with an unknown / ignored filter.
+6. Make deterministic result ID and sort the results. Any cache is keyed to the full normalized request and processing version.
+7. Add diagnostic logs: request/result ID, set version, duration, counts, error type. Do not log secrets and bulky source artifacts.
+8. Describe queries/responses and errors in OpenAPI with suitable examples.
+9. Save existing endpoints and modes; the new service uses a separate prepared repository.
+10. Measure cold/repeated request on demo kit. Set limits/timeouts; optimize reading and cache if necessary before entering background jobs.
 
-## Точки изменений
+## Points of change
 
-- Новый router в `backend/app/api/v1/` и подключение в `router.py`.
-- Сервис в `backend/app/services/`, схемы в `backend/app/schemas/`, adapter из WEB-002.
-- Geo-функции WEB-003, настройки лимитов/пути данных в `backend/app/core/config.py`.
-- Тесты в `tests/backend/`.
+- New router in `backend/app/api/v1/` and connection to `router.py`.
+- Service in `backend/app/services/`, diagrams in `backend/app/schemas/`, adapter from WEB-002.
+- Geo-functions WEB-003, limit/data path settings in `backend/app/core/config.py`.
+- Tests in `tests/backend/`.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] Один GET с bbox и датами возвращает все данные, необходимые новому экрану.
-- [ ] Смена bbox/периода действительно меняет результат, когда меняется выборка.
-- [ ] У дат соблюдена документированная семантика; правая временная граница обработана корректно.
-- [ ] Для одного запроса карта и summary относятся к одной версии/оценке.
-- [ ] Невалидный ввод, неизвестный набор, отсутствие файлов, пустой результат и недостаток покрытия различимы.
-- [ ] Перезапуск backend не меняет результат на неизменяемом наборе.
-- [ ] Типовой анализ укладывается в внутренний ориентир 10 секунд на зафиксированном окружении либо документировано обоснованное отклонение и план исправления. Требование организаторов — конечное время, не именно 10 секунд.
-- [ ] Не требуется ключ внешнего API для анализа локального подготовленного набора.
+- [ ] One GET with bbox and dates returns all the data a new screen needs.
+- [ ] Changing the bbox/period does change the result when the sample changes.
+- [ ] Dates have documented semantics; right time boundary processed correctly.
+- [ ] For a single query, the map and summary refer to the same version/estimation.
+- [ ] Failed input, unknown set, no files, empty result and lack of coverage are distinguishable.
+- [ ] Restarting the backend does not change the result on an immutable set.
+- [ ] Typical analysis fits into an internal reference point of 10 seconds on a fixed environment or documented reasonable deviation and correction plan. The requirement of the organizers is a finite time, not just 10 seconds.
+- [ ] No external API key is required to analyze the local prepared set.
 
-## Проверки
+## Checks
 
-Интеграционные запросы для всех контрактных примеров. Проверить одинаковые запросы до/после рестарта, два разных набора, частичное покрытие только одного источника, максимальный разрешённый запрос, параллельные запросы и отсутствие смешивания данных между ними. Повторный запрос не обязан иметь тот же `generated_at`, но числа, геометрии и `result_id` должны совпадать.
+Integration requests for all contract examples. Check for the same pre/post restart requests, two different sets, partial coverage of only one source, maximum allowed query, parallel queries and no data mixing between them. Repeated query does not have to have the same `generated_at`, but the numbers, geometries and `result_id` must match.
 
-## Вне задачи
+## Outside the task
 
-Экспорт файлов реализуется в WEB-008 через этот сервис. Не добавлять аккаунты, сохранённые пользовательские jobs и запуск моделей по произвольным данным.
+File export is implemented in WEB-008 through this service. Do not add accounts, saved user jobs and run models on arbitrary data.

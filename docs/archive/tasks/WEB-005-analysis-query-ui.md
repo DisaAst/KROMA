@@ -1,50 +1,50 @@
-# WEB-005. Выбор набора, территории и периода
+# WEB-005. Selection of set, territory and period
 
-Статус: DONE (19.09.2026). Приоритет: P0. Область: frontend. Критерий: R1.
+Status: DONE (19.09.2026)). Priority: P0. Area: frontend. Criterion: R1.
 
-Зависимости: WEB-001; для разработки допустимы подписанные фикстуры, финальная интеграция — WEB-004.
+Dependencies: WEB-001; signed fixtures are allowed for development, final integration is WEB-004.
 
-## Цель
+## Purpose
 
-Добавить понятный вход в пространственно-временной анализ внутри `/analytics`, сохранив существующую сводку. Пользователь должен понимать, что именно будет рассчитано, без знания API.
+Add a comprehensible input to space-time analysis inside `/analytics`, keeping the existing summary. The user must understand what will be calculated without knowing the API.
 
-## Пользовательский сценарий
+## User scripting
 
-1. Открыть вкладку «Анализ территории».
-2. Выбрать подготовленный набор; увидеть его источник, доступные даты и охват.
-3. Задать территорию прямоугольником на карте, координатами или кнопкой «Взять видимую область».
-4. Выбрать начальную и конечную даты.
-5. Нажать «Рассчитать» и получить результат одного зафиксированного запроса.
+1. Open the tab "Analysis of the territory".
+2. Select a prepared set; see its source, available dates and coverage.
+3. Set the territory with a rectangle on the map, coordinates or button "Take the visible area".
+4. Select starting and ending dates.
+5. Click "Calculate" and get the result of one recorded request.
 
-## Что сделать
+## What to do
 
-- Создать feature анализа, например `frontend/src/features/analysis/`: form/query state, query client и контейнер экрана. Форму не помещать целиком в общий `components/ui`.
-- Переиспользовать/расширить `Field`, `Card`, `PageHeader`, `StateMessage`, кнопки и MetricCard. Общие новые элементы — в `components/ui`.
-- Разделить `draftQuery` и `appliedQuery/result`: ввод новых дат и движение карты не должны изменять старый результат или параметры его экспорта.
-- Дать кнопку «Использовать пример» из каталога, чтобы пользователь мог сразу открыть гарантированно поддерживаемую область/период.
-- Реализовать выделение/изменение/сброс bbox с визуальной границей. Инструмент выделения не конфликтует с перемещением/измерением карты.
-- Предоставить числовой ввод координат как доступную альтернативу рисованию. Подписать порядок «запад, юг, восток, север», WGS84.
-- Валидировать даты и bbox на клиенте, сервер остаётся источником истины. Предупреждать о выходе за покрытие, не выдавать частичную область за полную.
-- Показывать календарные даты и пояснение UTC; для гарей — правило отбора по послепожарному снимку.
-- Сохранять применённый запрос в URL с версией набора, чтобы ссылка воспроизводила анализ. Черновик не должен незаметно перезаписывать её.
-- При новом запросе отменять ненужный fetch либо игнорировать устаревший ответ. Старый результат можно оставить видимым, но подписать, что новый расчёт ещё выполняется.
-- Состояния: исходное, редактирование, загрузка, успех, пусто, нет покрытия/валидных данных, частичное покрытие, ошибка + повтор.
+- Create feature analysis, such as `frontend/src/features/analysis/`: form/query state, query client and screen container. Do not place the entire form in the total `components/ui`.
+- Reuse/extend `Field`, `Card`, `PageHeader`, `StateMessage`, buttons and MetricCard. Common new elements - in `components/ui`.
+- Separate `draftQuery` and `appliedQuery/result`: entry of new dates and movement of the map should not change the old result or parameters of its export.
+- Give the "Use Example" button from the directory so that the user can immediately open the guaranteed supported area / period.
+- Implement allocation/change/reset bbox with visual boundary. The allocation tool does not conflict with the movement/measurement of the card.
+- Provide numerical coordinate input as an affordable alternative to drawing. Sign the order "West, South, East, North", WGS84.
+- Validate dates and bbox on the client, the server remains the source of truth. Warn about going beyond the coverage, do not issue a partial area for a full.
+- Show calendar dates and explanation of UTC; for hares, the selection rule for post-fire imagery.
+- Save the applied query in the URL with the set version so that the link reproduces the analysis. The draft should not discreetly rewrite it.
+- With a new request, cancel an unnecessary fetch or ignore an outdated response. You can leave the old result visible, but sign that the new calculation is still being performed.
+- Conditions: source, edit, download, success, empty, no coverage/valid data, partial coverage, error + repetition.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] Пользователь может выполнить запрос без ручного изменения URL/API и без знания координат.
-- [ ] Прямоугольник можно задать мышью и через поля с клавиатуры.
-- [ ] Неверные параметры не отправляются без объяснения; ошибки привязаны к полям и читаются скринридером.
-- [ ] Кнопка запуска отражает состояние загрузки и предотвращает случайные повторные клики.
-- [ ] При движении камеры результат и экспорт не меняются до нового запуска.
-- [ ] URL сохраняет применённый запрос; reload и браузерные назад/вперёд не показывают несоответствующие ему данные.
-- [ ] Отсутствие доступных наборов имеет понятное сообщение, не пустой select.
-- [ ] Экран работает в светлой/тёмной теме и на ширинах 390, 768, 1280, 1440 px без потери основных действий.
+- [ ] The user can execute the request without manually changing the URL/API and without knowing the coordinates.
+- [ ] The rectangle can be set with the mouse and through fields from the keyboard.
+- [ ] Incorrect parameters are not sent without explanation; errors are tied to fields and read by the screen reader.
+- [ ] The start button reflects the boot status and prevents accidental repeated clicks.
+- [ ] When the camera moves, the result and export do not change until a new launch.
+- [ ] URL saves the applied query; reload and browser back/forward do not show non-conforming data.
+- [ ] The lack of available sets has an understandable message, not an empty select.
+- [ ] The screen works in light/dark theme and at widths of 390, 768, 1280, 1440 px without loss of basic actions.
 
-## Проверки
+## Checks
 
-Запрос примера, изменение только периода, изменение только bbox, отмена рисования, сброс области, неверная дата, выход за охват, быстрое переключение запросов с ответами в обратном порядке, клавиатурная навигация и обновление страницы.
+Example request, period change only, bbox change only, draw cancellation, area reset, incorrect date, reachout, quick reverse order request switching, keyboard navigation and page update.
 
-## Вне задачи
+## Outside the task
 
-Свободный полигон, загрузка границ файлом, аккаунты и сохранённые на сервере запросы. Карту результатов и справку реализуют WEB-006/007.
+Free landfill, file loading, accounts and stored requests on the server. The results map and reference are implemented WEB-006/007.

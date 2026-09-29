@@ -1,9 +1,9 @@
-# Исследования
+# Research
 
-Здесь хранятся гипотезы и эксперименты. Создавайте notebooks, обзоры и отчёты только когда они нужны. Фиксируйте входные данные и способ воспроизведения; не добавляйте датасеты и секреты в Git. Проверенный код переносите в `ml/src/kroma_ml/` или `geo/src/kroma_geo/`.
+Here are stored hypotheses and experiments. Create notebooks, reviews and reports only when you need them. Fix inputs and playback methods; do not add datasets or secrets to Git. Transfer the verified code to `ml/src/kroma_ml/` or `geo/src/kroma_geo/`.
 
-Первый воспроизводимый пилот оценки описан в [документе](../docs/research/evaluation.md). Его рецепт находится в `research/experiments/build_evaluation_cohort.py`; метки для кандидатов ещё не собраны.
+The first reproducible pilot assessment is described in [document](../docs/research/evaluation.md). His recipe is in `research/experiments/build_evaluation_cohort.py`; the tags for candidates have not yet been collected.
 
-Исследование задачи, аналогов и четырёх AOI находится в [одном отчёте](report.md). Конфигурация и manifest пилотов лежат в `experiments/`; большие результаты остаются в `data/processed/` вне Git.
+The study of the problem, analogues and four AOIs is in [report](report.md). Configuration and manifest pilots lie in `experiments/`; great results remain in `data/processed/` outside Git.
 
-Конкурсный AF трек также документирован в [этом отчёте](report.md): `experiments/af_unet_experiments.py` запускает отдельную конфигурацию и smoke test, `experiments/af_ensemble.py` проверяет сохранённые карты вероятностей, `experiments/af_group_cv.py` сравнивает модели по трём пространственным фолдам. Промежуточные `.pt` и `.npz` исключены из Git; финальный production bundle включён в `ml/artifacts` и проверяется manifest.
+The AF competition track is also documented in [this report](report.md): `experiments/af_unet_experiments.py` runs a separate configuration and smoke test, `experiments/af_ensemble.py` checks stored probability maps, `experiments/af_group_cv.py` compares models on three spatial folds. Intermediate `.pt` and `.npz` are excluded from Git; final production bundle is included in `ml/artifacts` and verified by manifest.

@@ -1,122 +1,122 @@
-# Архив: План доработки веба KROMA под критерии оценки
+# Archive: Plan to finalize the KROMA web under evaluation criteria
 
-Дата аудита: 18 сентября 2026 года. Статус плана: согласованное направление, реализация задач ещё не выполнена.
+Audit Date: September 18, 2026. Status of the plan: agreed direction, implementation of tasks is not yet completed.
 
-## Цель
+## Purpose
 
-Довести существующий веб до законченного сценария:
+Bringing the existing web to a finished scenario:
 
-**Выбрать территорию и период → получить термоточки и контуры гарей → изучить площади по трём степеням поражения → скачать контуры и справку → воспроизвести результат через REST API.**
+**Select the territory and period of → get hotspots and contours of → hares study areas on three degrees of → damage download the contours and help → reproduce the result through the REST API.**
 
-Сохранить существующие обзор, события, таймлайн, темы и верхнюю навигацию. Не переписывать приложение и не заменять работу с реальными результатами обработки косметическими изменениями.
+Save existing review, events, timeline, themes and top navigation. Do not rewrite the application and do not replace work with real results of processing with cosmetic changes.
 
-## Основание и границы
+## Basis and boundaries
 
-Источники требований находятся в [description](../../description/):
+The sources of the claims are in [description](../../description/):
 
-- «Критерии оценки — Мониторинг природных пожаров КосмоХакатон 2026», раздел 4, страницы 5–6.
-- «Постановка кейса — Мониторинг природных пожаров КосмоХакатон 2026», страницы 14–15; ограничения на использование тестовых данных — страница 14.
+- “Assessment Criteria – Natural Fire Monitoring Cosmo Hackathon 2026”, section 4, pages 5–6.
+- “Case setting – Cosmo Hackathon Natural Fire Monitor 2026”, pages 14–15; limitations on the use of test data – page 14.
 
-Раздел веб-сервиса даёт до **12 баллов**, а не все 100 баллов соревнования:
+The web service section gives up to **12 points**, It's not all 100 points of competition:
 
-| Код | Требование | Баллы | Задачи |
+| Code | Demand | Balls | Tasks |
 | --- | --- | --- | --- |
-| R1 | Запуск по инструкции, пространственно-временной запрос, конечное время ответа, обязательный REST API | 0 или 4 | WEB-001, 002, 004, 005, 010, 011, 012 |
-| R2 | Карта термоточек за период и контуров гарей; выгрузка GeoJSON или Shapefile; корректные геометрии, система координат, ID, класс и площадь | 0–4 | WEB-002, 003, 004, 006, 008, 010, 012 |
-| R3 | Справка по территории и периоду: общая площадь и три степени поражения; машиночитаемый экспорт; корректные и воспроизводимые площади | 0–4 | WEB-001, 002, 003, 004, 007, 008, 010, 012 |
+| R1 | Instructional launch, space-time request, final response time, mandatory REST API | 0 or 4 | WEB-001, 002, 004, 005, 010, 011, 012 |
+| R2 | Map of hotspots for the period and contours of hares; unloading GeoJSON or Shapefile; correct geometries, coordinate system, ID, class and area | 0–4 | WEB-002, 003, 004, 006, 008, 010, 012 |
+| R3 | Territory and period reference: total area and three degrees of damage; machine-readable export; correct and reproducible areas | 0–4 | WEB-001, 002, 003, 004, 007, 008, 010, 012 |
 
-Это матрица соответствия, а не обещание баллов: итоговую оценку выставляют организаторы.
+This is a match matrix, not a promise of points: the final assessment is put out by the organizers.
 
-Допускается подготовленный ограниченный набор сцен. Поэтому минимальная версия использует **bbox и GeoJSON**; произвольный полигон и Shapefile не обязательны. Подготовленные результаты обработки реальных сцен допустимы; синтетические демонстрационные фигуры не подтверждают качество расчётов по исходным данным.
+A limited set of scenes is allowed. Therefore, the minimum version is used **bbox and GeoJson**; arbitrary polygon and Shapefile are not required. Prepared results of processing real scenes are permissible; synthetic demonstration figures do not confirm the quality of calculations from the source data.
 
-Обучение моделей, качество AF/BS, генерация `submission.csv` и скорость конкурсного инференса находятся вне этого плана. Вебу нужен контракт на результаты этих модулей, но реализация WEB-задач не закрывает ML-разделы оценки.
+Model training, AF/BS quality, `submission.csv` generation and competitive inferencing speed are outside this plan. The Web needs a contract for the results of these modules, but the implementation of WEB-tasks does not close the ML sections of the evaluation.
 
-## Исходное состояние
+## Reference state
 
-- Есть Next.js/MapLibre, FastAPI, Docker Compose, CI и автодеплой.
-- Есть карта, термоточки, контуры гарей, карточки событий, аналитика и сравнение «до/после».
-- Нет общего зафиксированного запроса территории и дат для карты, справки и экспорта.
-- Основной API использует `DemoFireRepository`; недельные показатели генерируются независимо от контуров.
-- `/analytics/summary` принимает даты и регион, но не bbox. `/map/burn-scars` принимает bbox, но не даты и не обрезает геометрии по области.
-- Зоны поражения в демонстрационных данных вложены друг в друга. Площадь атрибута зоны не равна площади её полного полигона.
-- Веб не предоставляет пользователю выгрузку выбранных контуров и справки.
-- Глобальный режим LIVE/сценарий не определяет источник на всех страницах одинаково.
-- Сравнение «до/после» показывает общие подложки, не привязанные к датам конкретной пары сцен.
-- На момент аудита LIVE на сервере возвращал `configured=false`, `offline`. Это наблюдение на дату аудита, а не постоянное свойство системы.
+- There are Next.js/MapLibre, FastAPI, Docker Compose, CI and autodeploy.
+- There are maps, hotspots, hare contours, event cards, analytics and before/after comparisons.
+- There is no general recorded request for territory and dates for map, reference and export.
+- The main API uses `DemoFireRepository`; weekly figures are generated regardless of the contours.
+- `/analytics/summary` accepts dates and region, but not bbox. `/map/burn-scars` accepts bbox, but not dates and does not trim geometry by area.
+- Damage zones in demonstration data nested into each other. The area of the zone attribute is not equal to the area of its full polygon.
+- The Web does not provide the user with the unloading of selected contours and references.
+- Global LIVE/Scenario Mode does not identify the source on all pages in the same way.
+- A before/after comparison shows common substrates not tied to the dates of a particular pair of scenes.
+- At the time of the audit LIVE on the server returned `configured=false`, `offline`. It is an observation at the date of the audit, not a permanent property of the system.
 
-В `docs/tasks/task-1` уже был пустой пользовательский файл. Он оставлен без изменений; рабочий реестр задач — этот файл.
+`docs/tasks/task-1` already had an empty user file. It's left unchanged; the task registry is this file.
 
-## Реестр задач
+## Roster of tasks
 
-Инженерная реализация выполнена 19 сентября 2026 года. Статусы ниже разделяют готовность кода и финальное доказательство на реальных данных: встроенный `synthetic_demo` не закрывает внешнюю зависимость WEB-002/012.
+Engineering implementation completed on September 19, 2026. Statuses below share code readiness and final proof on real data: built-in `synthetic_demo` does not close the external dependency WEB-002/012.
 
-| ID | Задача | Область | Приоритет | Зависимости |
+| ID | The challenge | The Domain | Priority | Dependencies |
 | --- | --- | --- | --- | --- |
-| [WEB-001](WEB-001-analysis-contract.md) | Зафиксировать контракт, семантику периода и результата | API + данные + frontend | P0 | Нет |
-| [WEB-002](WEB-002-prepared-datasets.md) | Подготовленные сцены и воспроизводимый источник результатов | Данные + интеграция | P0 | WEB-001; результаты обработки реальных сцен |
-| [WEB-003](WEB-003-geometries-and-areas.md) | Корректные геометрии, обрезка и расчёт площадей | Geo + backend | P0 | WEB-001; тестовые данные WEB-002 |
-| [WEB-004](WEB-004-analysis-api.md) | Единый REST API анализа территории | Backend | P0 | WEB-001, 002, 003 |
-| [WEB-005](WEB-005-analysis-query-ui.md) | Выбор набора, территории и дат в UI | Frontend | P0 | WEB-001; интеграция с WEB-004 |
-| [WEB-006](WEB-006-analysis-map.md) | Карта результатов одного запроса | Frontend | P0 | WEB-004, 005 |
-| [WEB-007](WEB-007-analysis-report.md) | Справка по трём степеням поражения | Frontend | P0 | WEB-004, 005 |
-| [WEB-008](WEB-008-exports.md) | Экспорт GeoJSON, CSV и JSON | Backend + frontend | P0 | WEB-003, 004, 007 |
-| [WEB-009](WEB-009-data-provenance.md) | Честные режимы, происхождение данных и снимки | Frontend + API | P1 | WEB-001, 002, 004 |
-| [WEB-010](WEB-010-verification.md) | Проверки геометрий, контрактов и сквозного сценария | QA + разработка | P1 | Пишется вместе с WEB-002–009; закрывается после них |
-| [WEB-011](WEB-011-reproducible-delivery.md) | Воспроизводимый запуск и комплект демонстрации | Infra + документация | P1 | WEB-002, 004, 008, 010 |
-| [WEB-012](WEB-012-final-acceptance.md) | Приёмка по R1–R3 и репетиция защиты | QA + команда | P1 | WEB-001–011 |
+| [WEB-001](WEB-001-analysis-contract.md) | Fix the contract, period and result semantics | API + data + frontend | P0 | No |
+| [WEB-002](WEB-002-prepared-datasets.md) | Prepared scenes and reproducible source of results | Data + Integration | P0 | WEB-001; the results of processing real scenes |
+| [WEB-003](WEB-003-geometries-and-areas.md) | Correct geometries, pruning and calculation of areas | Geo + backend | P0 | WEB-001; test data WEB-002 |
+| [WEB-004](WEB-004-analysis-api.md) | Unified REST API for territory analysis | Backend | P0 | WEB-001, 002, 003 |
+| [WEB-005](WEB-005-analysis-query-ui.md) | Selection of set, territory and dates in UI | Frontend | P0 | WEB-001; integration with WEB-004 |
+| [WEB-006](WEB-006-analysis-map.md) | Map of the results of a single request | Frontend | P0 | WEB-004, 005 |
+| [WEB-007](WEB-007-analysis-report.md) | Certificate of three degrees of defeat | Frontend | P0 | WEB-004, 005 |
+| [WEB-008](WEB-008-exports.md) | Exports of GeoJSON, CSV and JSON | Backend + frontend | P0 | WEB-003, 004, 007 |
+| [WEB-009](WEB-009-data-provenance.md) | Honest modes, data origins and snapshots | Frontend + API | P1 | WEB-001, 002, 004 |
+| [WEB-010](WEB-010-verification.md) | Verification of geometries, contracts and cross-cutting scenarios | QA + development | P1 | Written together with WEB-002-009; closed after them |
+| [WEB-011](WEB-011-reproducible-delivery.md) | Replayable launch and demonstration kit | Infra + documentation | P1 | WEB-002, 004, 008, 010 |
+| [WEB-012](WEB-012-final-acceptance.md) | Reception on R1-R3 and rehearsal for protection | QA + team | P1 | WEB-001–011 |
 
-### Фактический статус
+### De facto status
 
-| ID | Статус | Подтверждение / остаток |
+| ID | Status | Confirmation/residual |
 | --- | --- | --- |
-| WEB-001 | DONE | Pydantic + TypeScript + OpenAPI + контрактные тесты |
-| WEB-002 | PARTIAL: external data | Manifest/validator/adapter/fixture готовы; нужен разрешённый `model_output` |
-| WEB-003 | DONE | Векторизация, valid geometry, holes/MultiPolygon, clip, EPSG:6933 area, overlap tests |
-| WEB-004 | DONE | Каталог, readiness, единый REST, source coverage, stable result ID, limits/logical errors |
+| WEB-001 | DONE | Pydantic + TypeScript + OpenAPI + Contract Tests |
+| WEB-002 | PARTIAL: external data | Manifest/validator/adapter/fixture ready; `model_output` allowed |
+| WEB-003 | DONE | Vectorization, valid geometry, holes/MultiPolygon, clip, EPSG:6933 area, overlap tests |
+| WEB-004 | DONE | Catalog, readiness, single REST, source coverage, stable result ID, limits/logical errors |
 | WEB-005 | DONE | Dataset/bbox/dates, keyboard inputs, map bounds, draft/applied, URL/reload/history semantics |
-| WEB-006 | DONE | AOI, hotspots, 3 класса, легенда, popups, visibility, fit, tile-error isolation |
-| WEB-007 | DONE | Total + три степени, shares, null/zero, coverage/provenance/calculation |
+| WEB-006 | DONE | AOI, hotspots, 3rd class, legend, popups, visibility, fit, tile-error isolation |
+| WEB-007 | DONE | Total + three degrees, shares, null/zero, coverage/provenance/calculation |
 | WEB-008 | DONE | GeoJSON + CSV + JSON, expected result 409, headers, UI downloads |
-| WEB-009 | DONE | Origin в UI/API/export; unsupported LIVE sections and imagery are honestly labelled |
-| WEB-010 | DONE для fixture | 44 pytest + 22 frontend tests + lint/typecheck/build + browser protocol |
-| WEB-011 | PARTIAL: clean-room witness | Compose/config/docs/mount/CLI готовы; нужен запуск другим человеком в чистом каталоге |
+| WEB-009 | DONE | Origin: UI/API/export; unsupported LIVE sections and imagery are honestly labelled |
+| WEB-010 | DONE for fixture | 44 pytest + 22 frontend tests + lint/typecheck/build + browser protocol |
+| WEB-011 | PARTIAL: clean-room witness | Compose/config/docs/mount/CLI ready; need to be run by another person in a clean directory |
 | WEB-012 | BLOCKED by WEB-002 | Synthetic rehearsal recorded; real-scene acceptance remains |
 
-Фактические запросы, числа, времена и ограничения записаны в [web-acceptance.md](../../qa/web-acceptance.md).
+Actual requests, numbers, times and restrictions are recorded in [web-acceptance.md](../../qa/web-acceptance.md).
 
-## Порядок реализации
+## Implementation arrangements
 
-1. **Контракт и данные:** WEB-001; затем WEB-002 и геологика WEB-003. Интерфейс WEB-005 можно разрабатывать по явно помеченным контрактным фикстурам.
-2. **Рабочий запрос:** WEB-004 + WEB-005. Результат получаем через API и из интерфейса.
-3. **Полный пользовательский результат:** WEB-006 + WEB-007 + WEB-008. Карта, справка и файлы относятся к одному запросу.
-4. **Достоверность и поставка:** WEB-009, завершение WEB-010, WEB-011, WEB-012.
+1. **Contract and data:** WEB-001; then WEB-002 and geology WEB-003. The interface WEB-005 can be developed using clearly marked contract fixtures.
+2. **Working request:** WEB-004 + WEB-005. The result is obtained through the API and from the interface.
+3. **Full user result:** WEB-006 + WEB-007 + WEB-008. Map, Help and Files refer to a single request.
+4. **Credibility and delivery:** WEB-009, completion of WEB-010, WEB-011, WEB-012.
 
-Тесты добавлять при реализации каждой задачи, а не откладывать до четвёртого этапа. UI по фикстурам не означает завершённую интеграцию. Если реальных результатов пока нет, задача WEB-002 остаётся заблокированной по данным, а статус демонстрации явно указывается.
+Tests should be added to each task, rather than postponed until the fourth stage. Fixture UI does not mean complete integration. If there are no real results yet, the WEB-002 task remains blocked from the data, and the status of the demonstration is clearly indicated.
 
-## Общие правила реализации
+## General rules of implementation
 
-- [analysis-contract.md](analysis-contract.md) — реализованный и покрытый контракт новой функциональности; его Pydantic- и TypeScript-представления, OpenAPI и тесты должны изменяться синхронно.
-- Веб и REST используют одну серверную логику. Не считать итоговую площадь независимо в React, экспортере и API.
-- Черновик формы отделён от выполненного запроса. Экспорт относится к последнему показанному результату, а не к несохранённым полям.
-- У результата есть версия набора, версия обработки и идентификатор содержимого. Изменение данных не должно незаметно менять старый результат.
-- Все общие элементы интерфейса выносятся в `frontend/src/components/ui`. Специфичная логика анализа — в отдельную feature, а не в UI-примитивы.
-- Новую функциональность разместить внутри `/analytics`, например вкладкой «Анализ территории». Существующую сводку можно оставить отдельной вкладкой с честной маркировкой источника.
-- Сохранить светлую и тёмную темы, верхнюю навигацию, работу карты и существующих маршрутов.
-- Не использовать координаты/даты обезличенных тестовых чипов и не пытаться их восстановить. Не подменять ответы модели готовыми внешними продуктами по тесту.
-- Не публиковать секреты или ограниченные исходные данные. Зафиксировать допустимый способ передачи демонстрационного набора организаторам.
+- [analysis-contract.md](analysis-contract.md) — Implemented and covered contract of new functionality; its Pydantic and TypeScript representations, OpenAPI and tests must change synchronously.
+- Web and REST use the same server logic. Do not count the total area independently in React, Exporter and API.
+- The draft form is separated from the completed request. Exports refer to the last result shown, not to unsaved fields.
+- The result has a set version, processing version and content identifier. Changing the data should not change the old result.
+- All common interface elements are included in `frontend/src/components/ui`. Specific logic of analysis - in a separate feature, not in UI-primitives.
+- New functionality to place inside `/analytics`, for example, tab "Analysis of the territory". The existing summary can be left with a separate tab with an honest marking of the source.
+- Save light and dark themes, top navigation, map operation and existing routes.
+- Do not use the coordinates/dates of impersonal test chips or attempt to restore them. Do not replace model responses with ready-made external test products.
+- Do not publish secrets or limited source data. To fix an acceptable method of transferring a demonstration set to the organizers.
 
-## Общий Definition of Done
+## General Definition of Done
 
-- Выполнены критерии приёмки конкретной задачи; нет неподписанных заглушек вместо результата.
-- Есть релевантные тесты и обновлённая документация.
-- Изменённые frontend-модули проходят lint, typecheck, unit-тесты и production build; backend/geo — соответствующие pytest и ruff.
-- UI проверен в обеих темах, с клавиатурой, на десктопе и узком экране.
-- Состояния загрузки, ошибки, пустого результата и неполного покрытия не маскируются нулями.
-- Старый функционал не сломан; новые источники не смешиваются с демоданными.
-- Баллы R1–R3 не считаются закрытыми только по наличию кнопок: проверяется сценарий WEB-012 на подготовленных реальных результатах.
+- Acceptance criteria for a specific task are met; there are no unsigned stubs instead of the result.
+- There are relevant tests and updated documentation.
+- Modified front-end modules pass lint, typecheck, unit tests and production build; backend/geo – corresponding to pytest and ruff.
+- UI tested in both themes, with keyboard, desktop and narrow screen.
+- The states of loading, error, empty result and incomplete coverage are not masked by zeros.
+- Old functionality is not broken; new sources are not mixed with demodata.
+- R1-R3 points are not considered closed only on the presence of buttons: the script WEB-012 is checked on the prepared real results.
 
-## Что отложено
+## What's postponed
 
-После обязательного объёма можно добавить: произвольный полигон и импорт GeoJSON, Shapefile, PDF-справку, сохранённые запросы, личные кабинеты и роли, уведомления, расширенный LIVE, прогноз распространения и большую коллекцию сцен. Это не зависимости минимального закрытия R1–R3.
+After the mandatory volume, you can add: arbitrary polygon and import GeoJSON, Shapefile, PDF help, saved requests, personal accounts and roles, notifications, extended LIVE, distribution forecast and a large collection of scenes. This does not depend on the minimum closure of R1-R3.
 
-Для ограниченного набора не обязательны PostGIS, очередь задач и постоянное хранение результатов анализа. Не вводить их только ради архитектурной сложности: сначала измерить объём и время ответа.
+For a limited set, PostGIS, task queue and permanent storage of analysis results are not required. Do not enter them just for the sake of architectural complexity: first measure the volume and time of response.

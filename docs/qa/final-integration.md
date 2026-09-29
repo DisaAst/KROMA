@@ -1,95 +1,95 @@
 # Final product integration — 2026-09-19
 
-## Main и границы работы
+## Main and work boundaries
 
-Baseline main/origin/main: `bf088ec8f9cf6e7bf3029ad55463805f47853e30`. Начальные status/branch/log/fetch выполнены; рабочее дерево было чистым. Повторный fetch перед завершением подтвердил ту же удалённую ревизию. Reset/clean/rebase/force не применялись. Модели не переобучались; `weighted_comboloss_sampler.pt` пропущен по явному последующему указанию пользователя.
+Baseline main/origin/main: `bf088ec8f9cf6e7bf3029ad55463805f47853e30`. Initial status/branch/log/fetch completed; working tree was clean. Repeated fetch before completion confirmed the same remote audit. Reset/clean/rebase/force not applied. Models have not been retrained; `weighted_comboloss_sampler.pt` is omitted at the explicit subsequent instruction of the user.
 
-## Что уже было
+## What's happened?
 
-Существующий дизайн и страницы KROMA, MapLibre карта, FastAPI routes, scenario/live, prepared-analysis contract, geo area/clipping, TRAIN metadata index и previews, BS subprocess isolation, competition CLI и финальные веса. Шаблоны v001–v006 submission и исследовательская история уже присутствовали.
+Existing KROMA design and pages, MapLibre map, FastAPI routes, scenario/live, prepared-analysis contract, geo area/clipping, TRAIN metadata index and previews, BS subprocess isolation, competition CLI and final weights. V001–v006 submission templates and research history were already present.
 
-## Аудит и исправления
+## Audit and corrections
 
-| Подсистема | Исходное состояние | Итог |
+| Subsystem | Reference state | Outcome |
 | --- | --- | --- |
-| frontend | PARTIAL: Predict upload всегда unavailable, inspector prediction/errors placeholders, Research пустой | Полные TRAIN inference/results/exports; рабочие режимы инспектора, Research заполнен |
-| backend | PARTIAL: готовые services не подключены к UI; только liveness | Единый adapter, readiness/version/device/missing files, cache, runtime header, raster endpoints |
-| ML adapter | STALE: выбирал v005 при наличии v006 weights | Точный перенос существующего red-edge inference; полный byte-identical v006 |
-| geo | BROKEN на реальных сложных соседних контурах | GeometryCollection intersection, densification общих границ, STRtree и кэш CRS |
-| data/index | PARTIAL: builder только tar metadata | CLI для распакованного TRAIN, GeoTIFF CRS/transform, counts/area из масок |
-| map | PARTIAL: яркие квадраты, нет validation geometry | Кластеры AF/BS, subtle footprints, selection, GT/PRED/ERROR на выбранной сцене |
-| prepared analysis | MOCK по умолчанию | Сохранён CI fixture, добавлены реальные model/reference derived-наборы 3 BS + 3 AF |
-| exports | PARTIAL: уже был Shapefile backend, UI не подключён | GeoJSON/Shapefile/CSV/JSON и NPZ проверены; GT export работает без весов |
-| Docker | BROKEN: не устанавливал ml, не содержал bundle/index | Полные зависимости, CPU Torch, libgomp, данные/веса mounts, proxy frontend |
-| research | KEEP: подробная история с устаревшим итогом интеграции | История сохранена; обновлён только статус handoff и уточнённые public scores |
-| README/docs | STALE: ML объявлен пустым, Research stub, старый task backlog | Новый quickstart, model card/handoff/metrics/demo; планы в docs/archive/tasks |
-| config | WORKING/PARTIAL | Расширены env, manifest и previous stable registry; проверен Compose config |
-| tests | WORKING, но основные product gaps не покрыты | Регрессии geometry/area/Shapefile/missing mount; smoke и full inference выполнены |
+| frontend | PARTIAL: Predict upload is always unavailable, inspector prediction/errors placeholders | Full TRAIN inference/results/exports; Inspector modes, Research filled |
+| backend | Prefabricated services are not connected to the UI; only liveness | Unified adapter, readiness/version/device/missing files, cache, runtime header, raster endpoints |
+| ML adapter | STALE: Selected v005 with v006 weights | Precise transfer of existing red-edge inference; full byte-identical v006 |
+| geo | BROKEN on real complex neighboring contours | GeometryCollection intersection, densification of common borders, STRtree and CRS cache |
+| data/index | PARTIAL: builder only tar metadata | CLI for unpacked TRAIN, GeoTIFF CRS/transform, counts/area from masks |
+| map | PARTIAL: bright squares, no validation geometry | Clusters AF/BS, subtle footprints, selection, GT/PRED/ERROR on the selected stage |
+| prepared analysis | MOCK by default | CI fixture saved, real model/reference derived 3 BS+3 AF sets added |
+| exports | PARTIAL: Shapefile backend already, UI not connected | GeoJSON/Shapefile/CSV/JSON and NPZ verified; GT export works without weights |
+| Docker | BROKEN: did not install ml, did not contain bundle/index | Full dependencies, CPU Torch, libgomp, data/weight mounts, proxy frontend |
+| research | KEEP: A Detailed History with an Outdated Integration Outcome | History saved; only handoff status updated and updated public scores |
+| README/docs | STALE: ML declared empty, Research stub, old task backlog | New quickstart, model card/handoff/metrics/demo; plans in docs/archive/task |
+| config | WORKING/PARTIAL | Extended env, manifest and previous stable registry; verified by Compose config |
+| tests | WORKING, but the main product gaps are not covered | geometry/area/Shapefile/missing mount; smoke and full inference |
 
-## Статус страниц
+## Status of pages
 
-| Страница | Статус | Реальная граница |
+| Page | Status | The real border |
 | --- | --- | --- |
-| Overview | Работает | SCENARIO/live + TRAIN clusters; выбранная TRAIN validation geometry |
-| Events | Работает | Сценарная таблица помечена SCENARIO; добавлены ссылки на реальные TRAIN BS events |
-| Analytics | Работает | Overview остаётся SCENARIO; реальные сводки через Analysis |
-| Analysis | Работает | Prepared scenes ∩ bbox ∩ UTC dates; downloader не реализован |
-| Data | Работает | 420 AF / 224 BS, поиск/фильтры, previews при наличии raw TRAIN |
-| Predict | Работает | Полный TRAIN package, AF/BS v006, metrics, probability, экспорт |
-| About | Работает | Проект, два этапа AF+BS, существующие сведения 5BIT |
-| Research | Работает | Score progression, pipeline, эксперименты, ограничения |
-| Swagger | Работает | `/docs` и OpenAPI; routes вызываются HTTP/curl |
+| Overview | It works | SCENARIO/live + TRAIN clusters; selected by TRAIN validation geometry |
+| Events | It works | Scenario table tagged with SCENARIO; links to real TRAIN BS events added |
+| Analytics | It works | Overview remains SCENARIO; real summaries through Analysis |
+| Analysis | It works | Prepared scenes ∩ bbox ∩ UTC dates; downloader not implemented |
+| Data | It works | 420 AF/224 BS, search/filters, previews with raw TRAIN |
+| Predict | It works | Full TRAIN package, AF/BS v006, metrics, probability, export |
+| About | It works | Project, two stages of AF+BS, existing 5BIT data |
+| Research | It works | Score Progression, Pipeline, Experiments, Limitations |
+| Swagger | It works | `/docs` and OpenAPI; routes are called HTTP/curl |
 
-В браузере пройдены страницы, выбор TRAIN, BS prediction/errors, AF I4/I5/difference/GT и local TP/FP/FN, inspector before/after, scenario incident detail, Analysis на реальном prepared model, кнопка Shapefile, operator menu и Swagger UI через frontend proxy. В production подтверждены центрирование карты на выбранной TRAIN-сцене и переключение GT/PRED/ERROR; добавлена расшифровка цветов severity и ошибок. Проверен компактный viewport 900×800 без горизонтального переполнения Predict. Backend проверяет invalid query, missing data/artifacts, checksum, no coverage, empty result через существующие и новые тесты. Полный перебор каждого состояния каждой кнопки на каждом viewport не автоматизирован.
+The browser has passed pages, selected TRAIN, BS prediction/errors, AF I4/I5/difference/GT and local TP/FP/FN, inspector before/after, incident detail, Analysis on a real scenario prepared model, Shapefile button, operator menu and Swagger UI via frontend proxy. Production confirms map centering on selected TRAIN scene and switching GT/PRED/ERROR; added color decoding severity and errors. Confirmed compact viewport 900×800 without horizontal overflow Predict. Backend checks invalid query, missing data/artifacts, checksum, no coverage, empty result through existing and new tests. A complete search of each state of each button on each viewport is not automated.
 
-## Проверки и воспроизводимость
+## Verifications and reproducibility
 
-- Python: **134 passed, 3 skipped**. Skips относятся к legacy AF research checkpoint и U-Net validation maps, которых нет в локальной поставке; текущий production AF/BS проверен отдельно.
-- Frontend: **22 passed**, TypeScript, ESLint, production build — PASS после чистой генерации Next-кэша.
-- Ruff и `git diff --check` — PASS.
+- Python: **134 passed, 3 skipped**. Skips refer to legacy AF research checkpoint and U-Net validation maps that are not in local delivery; current production AF/BS verified separately.
+- Frontend: **22 passed**, TypeScript, ESLint, production build – PASS after clean Next-cache generation.
+- Ruff and `git diff --check` - PASS.
 - `pip check` — PASS; clean Docker dependency install — PASS.
-- Geo: 20×20 м = 0.04 га; 4 pixels = 0.16 га, 900 pixels = 36 га; CRS, holes, adjacent classes, geometry collections и Shapefile roundtrip.
-- Полный inference: **447 строк, 180 AF + 89 BS, 0 failed chips**, SHA256 `4ad1876c70836b6a003629f4d1dda836f17d8070a59d2a5c88c29b50c024865a` совпал с submission_v006. Проверены keys/order, RLE roundtrip, duplicates, NaN и class overlap. В данном TEST нет BS с cloud_frac ≥ 0.5; все имеющиеся облачные сцены включены в полный прогон.
-- Service smoke `BS_te_000001`, `000020`, `000089` совпал с reference; финальный повтор `BS_te_000001` после metadata-изменений также exact.
+- Geo: 20×20 m = 0.04 ha; 4 pixels = 0.16 ha, 900 pixels = 36 ha; CRS, holes, adjacent classes, geometry collections and Shapefile roundtrip.
+- Full inference: **447 lines, 180 AF + 89 BS, 0 failed chips**, SHA256 `4ad1876c70836b6a003629f4d1dda836f17d8070a59d2a5c88c29b50c024865a` coincides with submission_v006. Checked keys/order, RLE roundtrip, duplicates, NaN and class overlap. This TEST does not have a BS with cloud_frac ≥ 0.5; all available cloud scenes are included in the full run.
+- Service smoke `BS_te_000001`, `000020`, `000089` coincided with reference; final repeat of `BS_te_000001` after metadata changes also exact.
 - Missing weights: `/health` 200/ok, readiness false, inference unavailable; GT export 200.
-- Все три prepared-набора проходят dataset validator. Valid coverage построен по маскам; BS date-only normalizes to 00:00 UTC, произвольное время съёмки не выдумывается.
-- Docker backend и frontend builds — PASS; контейнерный AF_tr_000001 = 44 pixels, BS_tr_000001 = 462.12 га. Compose local/prod config — PASS.
-- HTTP/curl: health/models/docs/openapi, datasets, inference, overlays, raw masks/probability, validation geometry, scenario/live/map routes, real prepared analysis и exports — PASS.
+- All three prepared sets pass the dataset validator. Valid coverage built on masks; BS date-only normalizes to 00:00 UTC, arbitrary shooting time is not made up.
+- Docker backend and frontend builds - PASS; container AF_tr_000001 = 44 pixels, BS_tr_000001 = 462.12 ha. Compose local/prod config — PASS.
+- HTTP/curl: health/models/docs/openapi, datasets, inference, overlays, raw masks/probability, validation geometry, scenario/live/map routes, real prepared analysis and exports - PASS.
 
-[Inference evidence](inference-verification.json), [API timing evidence](api-verification.json), [локальные runtime versions](runtime-versions.txt), [метрики](../key_metrics.md).
+[Inference evidence](inference-verification.json), [API timing evidence](api-verification.json), [Local runtime versions](runtime-versions.txt), [metric](../key_metrics.md).
 
 ## Cleanup
 
-KEEP: source, tests, license/критичные notices, final weights, submission CSV/metadata, research report и experiment history. Синтетический CI fixture сохранён с origin synthetic_demo.
+KEEP: source, tests, license/critical notices, final weights, submission CSV/metadata, research report and experiment history. Synthetic CI fixture saved with origin synthetic_demo.
 
-MOVE: прежние планы `docs/tasks` → `docs/archive/tasks`; ссылки архива исправлены.
+MOVE: former `docs/tasks` → `docs/archive/tasks` plans; archive links fixed.
 
-DELETE: пустой `docs/tasks/task-1`; из UI удалены неработающий JPEG predict flow, placeholders prediction/errors и фиктивная анимация стадий Analysis. Старый upload endpoint остался совместимым диагностическим endpoint с явным unavailable.
+DELETE: Empty `docs/tasks/task-1`; idle JPEG predict flow, placeholders prediction/errors and fictitious stage animation Analysis removed from UI. Old upload endpoint remained compliant diagnostic endpoint with clear unavailable.
 
-IGNORE: venv, IDE/cache, raw datasets, previews/runtime/tmp, OOF `.npy/.npz`, local candidates, logs, распакованный локальный checkpoint `best_class1.pt/`. Дубли правил .gitignore сокращены. В tracked не было OS/IDE/log/temp/notebook мусора. Репозиторий не очищался разрушительными Git-командами.
+IGNORE: venv, IDE/cache, raw datasets, previews/runtime/tmp, OOF `.npy/.npz`, local candidates, logs, unpacked local checkpoint `best_class1.pt/`. Doubles of .gitignore rules cut. Tracked did not have OS/IDE/log/temp/notebook garbage. Repository was not cleaned by destructive Git commands.
 
-## Сверка отчёта
+## Verification of the report
 
-README, UI, manifest и research/report.md согласованы: GOLD v006 / 0.8176; previous v005 / 0.8127. Старые утверждения research сохранены как исторические этапы, итоговая строка «v006 не интегрирован» исправлена. Полный pipeline и inputs не менялись математически; обучение не выполнялось.
+README, UI, manifest and research/report.md agreed: GOLD v006 / 0.8176; previous v005 / 0.8127. Old research statements are preserved as historical milestones, the final line "v006 is not integrated" corrected. Complete pipeline and inputs did not change mathematically; training was not performed.
 
-## Известные ограничения
+## Known limitations
 
-1. Пространственный query — bbox + даты; polygon API/downloader не добавлялись. Prepared outputs используются только в своём покрытии.
-2. Метрики TRAIN in-sample; prepared real demo содержит 6 сцен. Это не независимая оценка качества.
-3. Нет доказанной связи каждого AF chip с BS event; полная цепочка incident lifecycle остаётся SCENARIO и не выдаётся за реальное наблюдение.
-4. Первый web BS запрос новой сцены запускает изолированный neural subprocess; competition запускает один batch. Persistent worker не внедрялся. Кэш versioned, неперсистентный, 12 записей; при замене bundle перезапуск.
-5. LIVE требует FIRMS key; внешние картографические тайлы требуют сети. RAW FIRMS не вход AF-модели.
-6. Нет авторизации/ролей и интегрированного PostGIS. Кроссплатформенная bit-exact гарантия не заявлена.
-7. Полное воспроизведение training history требует исследовательских OOF/raw inputs вне Git. Запуск inference требует только shipped bundle и официальный input package.
-8. Deployment/push не выполнялись; существующий main workflow разворачивает новые опубликованные коммиты.
+1. Spatial query - bbox + dates; polygon API/downloader not added. Prepared outputs are used only in their coverage.
+2. Train in-sample; prepared real demo contains 6 scenes. This is not an independent quality assessment.
+3. There is no proven link between each AF chip and the BS event; the full chain of incident lifecycle remains SCENARIO and does not pass for real surveillance.
+4. First Web BS New Scene Query Launches Isolated Neural Subprocess; Competition Runs One Batch. Persistent worker not implemented. Cache versioned, nonpersistent, 12 entries; when replacing bundle restart.
+5. LIVE requires FIRMS key; external map tiles require networking. RAW FIRMS does not enter the AF model.
+6. No Authorization/Roles and Integrated PostGIS. Cross-platform bit-exact guarantee not declared.
+7. Full playback of training history requires research OOF/raw inputs outside of Git. Inference only requires a shipped bundle and an official input package.
+8. Deployment/push not executed; existing main workflow deploys new published commits.
 
-## Команды и demo
+## Teams and demo
 
-Команды запуска — в начале [README](../../README.md). Demo: Overview → Events → Data → BS_tr_000001 → PRE/POST → GT/pred/errors → Predict → area/severity → GeoJSON/Shapefile/NPZ → real Analysis → Swagger. Подробный сценарий: [demo_script](../demo_script.md).
+Launch commands - at the beginning [README](../../README.md). Demo: Overview → Events → Data → BS_tr_000001 → PRE/POST → GT/pred/errors → Predict → area/severity → GeoJSON/Shapefile/NPZ → real Analysis → Swagger. Detailed scenario: [demo_script](../demo_script.md).
 
-## Изменённые файлы
+## Modified files
 
-Полный состав integration-коммита (A — добавлен, M — изменён, R — перемещён, D — удалён):
+The full composition of the integration commit (A - added, M - changed, R - moved, D - removed)):
 
 ```text
 M	.dockerignore

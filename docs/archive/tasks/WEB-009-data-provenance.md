@@ -1,42 +1,42 @@
-# WEB-009. Источники данных, режимы и достоверное «до/после»
+# WEB-009. Data sources, modes and reliable “before/after”
 
-Статус: DONE (19.09.2026). Приоритет: P1, обязательно до защиты. Область: frontend + API. Критерии: достоверность демонстрации R1–R3.
+Status: DONE (19.09.2026)). Priority: P1, mandatory before protection. Area: frontend + API. Criteria: Reliability of R1–R3 demonstration.
 
-Зависимости: WEB-001, WEB-002, WEB-004.
+Dependencies: WEB-001, WEB-002, WEB-004.
 
-## Цель и проблема
+## Purpose and problem
 
-Пользователь должен понимать, видит ли он реальные текущие наблюдения, подготовленные результаты модели или синтетический сценарий. Сейчас режим LIVE меняет карту, но таблица событий и аналитика продолжают обращаться к демо-репозиторию. Пара «до/после» использует общие спутниковые подложки вместо сцен с датами из карточки.
+The user must understand whether he or she is seeing real-world current observations, prepared model results, or a synthetic scenario. Now the LIVE mode changes the map, but the event table and analytics continue to refer to the demo repository. The “before/after” pair uses shared satellite substrates instead of scenes with dates from the card.
 
-## Что сделать
+## What to do
 
-1. Провести инвентаризацию источников на `/`, `/events`, `/analytics`, в поиске, списках регионов, инспекторе и сравнении снимков.
-2. На каждом экране явно указывать origin: «Актуальные наблюдения NASA FIRMS», «Подготовленные результаты обработки», «Демонстрационный сценарий» или «Эталонные данные».
-3. В анализе территории источником управляет выбранный dataset/version. Не позволять глобальному LIVE-переключателю визуально обещать изменение источника справки, если это не реализовано. Минимальный вариант — скрыть/ограничить этот переключатель на новом экране и подписать источник.
-4. Для существующих страниц либо подключить соответствующий выбранному режиму источник, либо локально показать, что раздел доступен только как сценарий. Не дублировать целую неподдерживаемую LIVE-аналитику ради формальной одинаковости меню.
-5. Если FIRMS не настроен или устарел, показывать offline/stale, время последнего успешного обновления и понятное объяснение. Не заменять реальные наблюдения синтетическими незаметно.
-6. В сравнение «до/после» подключать реальные изображения соответствующей пары сцен, если артефакты есть. Использовать их bounds/геопривязку, времена, облачность и attribution.
-7. Если пары изображений нет, не показывать общую подложку под видом снимков заданных дат: скрыть сравнение или назвать его «Подложка и результат классификации», убрать неподтверждённые даты/спутники.
-8. Маркировать синтетические прогнозы, угрозу и прочие демонстрационные оценки. Не выдавать эвристическую достоверность за экспериментальную метрику модели.
-9. Сохранить сведения об источнике в экспортных метаданных и справке, а не только в декоративном badge.
+1. Inventory of sources on `/`, `/events`, `/analytics`, in search, lists of regions, inspector and comparison of images.
+2. On each screen, clearly indicate origin: “Actual NASA FIRMS observations”, “Prepared processing results”, “Demonstration scenario” or “Reference data”.
+3. In the analysis of the territory, the source is controlled by the selected dataset/version. Do not allow a global LIVE switch to visually promise to change the help source if it is not implemented. The minimum option is to hide/limit this switch on a new screen and sign the source.
+4. For existing pages, either connect the source corresponding to the selected mode, or locally show that the partition is only available as a script. Don’t duplicate whole unsupported LIVE analytics for the sake of a formal uniform menu.
+5. If FIRMS is not configured or outdated, show offline/stale, time of last successful update and understandable explanation. Do not replace real observations with synthetic ones unnoticed.
+6. In the before/after comparison, connect real images of the corresponding pair of scenes, if artifacts are present. Use their bounds/geo-reference, times, cloudiness and attribution.
+7. If there are no pairs of images, do not show the common substrate under the guise of snapshots of given dates: hide the comparison or call it “Substrate and classification result”, remove unconfirmed dates / satellites.
+8. Label synthetic forecasts, threats and other demonstration assessments. Do not pass off heuristic reliability as an experimental model metric.
+9. Save source information in export metadata and reference, not just decorative badge.
 
-## Точки изменений
+## Points of change
 
-`components/shell/ModeSwitch.tsx`, `StatusIndicator.tsx`, `features/events/EventsTable.tsx`, `features/analytics/AnalyticsView.tsx`, `BurnScarCompare.tsx`, `CompareMap.tsx`, `config/map.ts`, новый feature анализа и provenance-схемы.
+`components/shell/ModeSwitch.tsx`, `StatusIndicator.tsx`, `features/events/EventsTable.tsx`, `features/analytics/AnalyticsView.tsx`, `BurnScarCompare.tsx`, `CompareMap.tsx`, `config/map.ts`, new feature analysis and provenance schemes.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] На каждом экране источник виден и соответствует реально вызываемому API.
-- [ ] Нельзя принять demo/reference за актуальные наблюдения или выход модели.
-- [ ] Отключённый LIVE не мешает анализу подготовленного набора и не подменяется демо без предупреждения.
-- [ ] Изображения «до/после» подтверждены scene IDs/датами либо сравнение честно переименовано/отключено.
-- [ ] Один и тот же origin отражён на экране, в API и файлах.
-- [ ] Не потеряны attribution используемых подложек и снимков.
+- [ ] On each screen, the source is visible and corresponds to the actual API being called.
+- [ ] You cannot accept demo/reference for actual observations or model output.
+- [ ] Disabled LIVE does not interfere with the analysis of the prepared set and is not replaced by a demo without warning.
+- [ ] Before/after images confirmed by scene IDs/dates or comparison honestly renamed/disabled.
+- [ ] The same origin is displayed on the screen, in APIs and files.
+- [ ] Not lost attribution of used substrates and images.
 
-## Проверки
+## Checks
 
-Переключение режимов на всех страницах; LIVE без ключа, stale и успешный LIVE при наличии тестового источника; подготовленный набор без растровых превью; reference/synthetic origins; переход по прямой ссылке; reload; изменение темы.
+Switching modes on all pages; LIVE without a key, stale and successful LIVE with a test source; prepared set without raster previews; reference/synthetic origins; click on a direct link; reload; change the topic.
 
-## Вне задачи
+## Outside the task
 
-Обязательная настройка внешнего FIRMS-ключа, разработка спутникового архива, обязательное сравнение снимков при отсутствии входных артефактов. Реальное «до/после» — полезная демонстрация, но не отдельный обязательный пункт R1–R3.
+Mandatory configuration of external FIRMS key, development of satellite archive, mandatory comparison of images in the absence of input artifacts. The real “before/after” is a useful demonstration, but not a separate requirement R1–R3.

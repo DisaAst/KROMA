@@ -1,45 +1,69 @@
 # KROMA
 
-Двухэтапный мониторинг природных пожаров: **Active Fire (AF)** по VIIRS и **Burn Severity (BS)** по Sentinel-2 до/после. Карта, Official TRAIN inspector, GOLD v006 inference, пространственно-временной анализ, площади и экспорт GeoJSON / Shapefile ZIP / CSV / JSON.
+KROMA combines **Active Fire (AF)** detection from VIIRS with **Burn Severity (BS)** estimation from before-and-after Sentinel-2 imagery. It provides an interactive map, an official TRAIN inspector, GOLD v006 inference, spatial and temporal analysis, area estimates, and GeoJSON, Shapefile ZIP, CSV and JSON exports.
 
-## Быстрый запуск
+Developed by the **5 bit** team. This is the personal public copy maintained by [DisaAst](https://github.com/DisaAst). Documentation is in English; literal dataset paths and recorded research artifacts retain their original spelling where required for reproducibility. The application interface is unchanged.
 
-Python 3.12, Node.js 22. На macOS для LightGBM нужен `libomp` (`brew install libomp`). Полный комплект production-весов уже находится в `ml/artifacts` и проверяется по SHA256. Команды выполняются из корня репозитория; backend и frontend запускайте в разных терминалах.
+## Quick start
+
+Use Python 3.12 and Node.js 22. On macOS, LightGBM requires `libomp` (`brew install libomp`). Production weights are included in `ml/artifacts` and verified with SHA256. Run commands from the repository root, with the backend and frontend in separate terminals.
 
 ```bash
-git clone https://github.com/BitsOfDanya/KROMA.git && cd KROMA
+git clone https://github.com/DisaAst/KROMA.git && cd KROMA
 python3.12 -m venv .venv && source .venv/bin/activate
 python -m pip install -e geo -e ml -e backend pytest ruff
 python scripts/mount_artifacts.py
 npm ci --prefix frontend
+```
+
+Start the backend:
+
+```bash
 OMP_NUM_THREADS=2 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Start the frontend in a second terminal:
+
+```bash
 npm run dev --prefix frontend
+```
+
+Open http://localhost:3000 or the Swagger API documentation at http://localhost:8000/docs. The frontend proxies `/api`, `/docs`, `/health` and `/models` to the backend. Set `KROMA_BACKEND_URL` at frontend startup or build time to use a different backend port.
+
+The web application and built-in prepared analysis work without the official TEST dataset. Competition inference requires a local copy of TEST:
+
+```bash
 python inference.py --data-dir data/test --output tmp/submission.csv --workers 2 --threads 2
 ```
 
-Последняя команда требует локальный официальный TEST; веб и встроенный prepared-анализ работают без него. Откройте **http://localhost:3000**, Swagger **http://localhost:8000/docs**. Frontend по умолчанию проксирует `/api`, `/docs`, `/health`, `/models` в backend; для другого порта используйте `KROMA_BACKEND_URL` при запуске/сборке frontend. Существующие процессы останавливать не требуется: задайте свободные порты.
-
-Для Predict и исходных PRE/POST разместите официальный TRAIN в `data/Мониторинг DATA/train` либо задайте `KROMA_TRAIN_ROOT`. Затем:
+For TRAIN inference and original PRE/POST imagery, place the official training data in `data/Мониторинг DATA/train` or set `KROMA_TRAIN_ROOT`, then rebuild the index:
 
 ```bash
 python scripts/build_train_index.py --train-root "$KROMA_TRAIN_ROOT"
 ```
 
-Без переменной используйте `python scripts/build_train_index.py`. Индекс и компактные derived-наборы уже включены в Git, сырые растры — нет. `.env.example` служит образцом; локальный Python не загружает `.env` автоматически. Для uvicorn можно явно добавить `--env-file .env`, предварительно исправив контейнерные пути на локальные.
+Without the variable, run `python scripts/build_train_index.py`. The index and compact derived datasets are already tracked in Git; raw rasters are excluded. Local Python does not automatically load `.env`. You can pass `--env-file .env` to uvicorn after replacing container paths with local paths.
 
-## Что можно показать сразу
+## Available features
 
-- **Обзор**: существующая карта KROMA; TRAIN AF/BS кластеры, сдержанные footprints, выбранная сцена и GT / Prediction / Errors при приближении.
-- **События**: явно обозначенный SCENARIO; полный сценарный incident inspector. Реальные TRAIN-сцены и события доступны через «Данные».
-- **Аналитика**: SCENARIO для демонстрационной динамики; реальные динамические итоги в «Анализе территории».
-- **Анализ**: bbox + включительный период UTC → пересекающиеся prepared scenes → термоточки, контуры, severity и справка. Рабочие примеры берутся из каталога наборов.
-- **Данные**: 420 AF + 224 BS official TRAIN, поиск/фильтры, метаданные, I4/I5/difference, PRE/POST slider, dNBR, landcover, GT и model output.
-- **Предикт**: загрузка своего ZIP с полным чипом для AF/BS inference (маска и площадь/число термоточек) или выбор TRAIN-сцены для GT, errors, локальных метрик, GeoJSON, Shapefile и NPZ.
-- **О проекте / Research / О команде**: реальные сведения проекта, pipeline, leaderboard и ограничения.
+- **Overview:** TRAIN AF/BS clusters, scene footprints, and ground truth, predictions and errors at closer zoom levels.
+- **Events:** an explicitly marked SCENARIO incident inspector. Real TRAIN scenes are available through Data.
+- **Analytics:** SCENARIO time series for demonstration; real prepared results are available in area analysis.
+- **Analysis:** a bounding box and inclusive UTC date range select intersecting prepared scenes, hotspots, contours, severity classes and a report.
+- **Data:** 420 AF and 224 BS official TRAIN scenes, filters, metadata, I4/I5/difference layers, PRE/POST comparison, dNBR, land cover, ground truth and model output.
+- **Predict:** upload a complete chip as ZIP, or select a TRAIN scene for predictions, errors, local metrics and exports.
+- **Project, Research and Team:** project information, the processing pipeline, leaderboard results and limitations.
 
-Обычный JPEG не является входом AF/BS. `/api/v1/inference/upload` принимает один ZIP до 64 МБ с TIFF одного чипа: каждый TIFF имеет размер 256×256, имена имеют общий `ID`. Для AF нужны `ID_VIIRS_I1-I5.tif` (8 каналов) и `ID_AUX.tif` (5 каналов). Для BS нужны `ID_Sentinel-2_pre.tif`, `ID_Sentinel-2_post.tif` (по 10 каналов), `ID_Sentinel-1_pre.tif`, `ID_Sentinel-1_post.tif` (по 2 канала) и `ID_AUX.tif` (3 канала). Папки внутри ZIP допустимы. Разметка и координаты не требуются; метрики качества и векторный экспорт для своего ZIP не доступны. TRAIN-предикт требует подключённых исходных растров на сервере.
+`POST /api/v1/inference/upload` accepts one ZIP of up to 64 MB containing the TIFF files for a single 256 × 256 chip. All filenames must share the same `ID`; subdirectories are allowed.
 
-## Архитектура
+| Task | Required files |
+|---|---|
+| AF | `ID_VIIRS_I1-I5.tif` with 8 channels and `ID_AUX.tif` with 5 channels |
+| BS | `ID_Sentinel-2_pre.tif` and `ID_Sentinel-2_post.tif` with 10 channels each; `ID_Sentinel-1_pre.tif` and `ID_Sentinel-1_post.tif` with 2 channels each; `ID_AUX.tif` with 3 channels |
+
+An ordinary JPEG is not a valid model input. Uploaded chips do not require labels or coordinates, but quality metrics and vector exports are unavailable for these uploads. TRAIN inference requires source rasters mounted on the server.
+
+## Architecture
 
 ```text
 Next.js / React / MapLibre
@@ -52,24 +76,24 @@ kroma_ml: AF LightGBM | isolated BS Torch → physics / refiners v006
 kroma_geo: CRS, raster geometry, pixel area, clipping, topology
 ```
 
-Backend не импортирует Torch и LightGBM: модель вызывается через `kroma_ml.service`. Torch BS stage изолирован в subprocess для совместимости macOS MPS + LightGBM. Competition запускает один neural subprocess на весь набор BS. Первый запрос новой сцены в вебе пока запускает отдельный neural subprocess; повторные результаты и геометрии кэшируются по `scene_id + model_version` (LRU, 12 записей). После замены комплекта весов требуется перезапуск сервиса.
+The backend calls models through `kroma_ml.service`; it does not import Torch or LightGBM directly. The Torch BS stage runs in a subprocess for macOS MPS and LightGBM compatibility. Competition inference uses one neural subprocess for the whole BS dataset. A new scene requested through the web application starts a separate subprocess; repeated results and geometries use a 12-entry LRU cache keyed by `scene_id + model_version`. Restart the service after replacing the weight bundle.
 
-| Каталог | Назначение |
-| --- | --- |
-| `frontend/` | Существующий интерфейс KROMA и карта |
-| `backend/app/` | REST, сервисы, источники, derived prepared datasets |
-| `ml/src/kroma_ml/` | Production adapter, competition inference, модели и признаки |
-| `ml/artifacts/manifest.json` | CURRENT GOLD, входы/выходы, пороги, SHA256 файлов |
-| `geo/` | Площадь, CRS, векторизация и проверка геометрий |
-| `data/fire-aoi/` | TRAIN index и разрешённый AOI |
-| `research/` | Сохранённая история экспериментов и итоговый отчёт |
-| `scripts/` | Проверка/упаковка весов, builder индекса и prepared-наборов |
-| `tests/` | Backend, geo, ML, интеграционные проверки |
-| `artifacts/submissions/` | Исторические submission v001–v006 и metadata |
+| Directory | Purpose |
+|---|---|
+| `frontend/` | Web interface and map |
+| `backend/app/` | REST API, services, sources and prepared datasets |
+| `ml/src/kroma_ml/` | Production adapter, competition inference, models and features |
+| `ml/artifacts/manifest.json` | CURRENT GOLD inputs, outputs, thresholds and file hashes |
+| `geo/` | Area calculations, CRS, vectorization and geometry validation |
+| `data/fire-aoi/` | TRAIN index and permitted area of interest |
+| `research/` | Experiment history and final report |
+| `scripts/` | Weight verification and packaging, index and dataset builders |
+| `tests/` | Backend, geospatial, ML and integration checks |
+| `artifacts/submissions/` | Historical submissions v001–v006 and metadata |
 
-## Данные и происхождение
+## Data and provenance
 
-Официальные TRAIN/Test выдаются организаторами: [Мониторинг DATA](https://disk.yandex.ru/d/-rpmevTflbXZQg). Условия использования определяются организаторами; собственную лицензию на исходные данные проект не назначает.
+The organizers supply official TRAIN and TEST data through [the dataset download](https://disk.yandex.ru/d/-rpmevTflbXZQg). Their terms govern use; this project does not assign a separate license to the source data.
 
 ```text
 data/Мониторинг DATA/train/
@@ -79,30 +103,30 @@ data/test/
   meta.csv, sample_submission.csv, af/, bs/
 ```
 
-Builder TRAIN читает meta и маски GeoTIFF, CRS, affine transform, размер, bbox, event/date/satellite, cloud/valid и counts severity. Идентификаторы TEST не геопривязываются, дата/место TEST не восстанавливаются. Альтернатива распакованному TRAIN для старых previews — `data/yandex/fire-train-renamed.tar`; для production inference нужен распакованный каталог.
+The TRAIN index builder reads metadata, GeoTIFF masks, CRS, affine transforms, dimensions, bounding boxes, event/date/satellite fields, cloud and valid-pixel information, and severity counts. It does not geolocate TEST identifiers or reconstruct their locations or dates. Legacy previews can use `data/yandex/fire-train-renamed.tar`; production inference requires unpacked TRAIN data.
 
-В `backend/app/prepared_data/` включены:
+The repository includes these compact datasets under `backend/app/prepared_data/`:
 
-| Набор | Источник | Содержимое |
-| --- | --- | --- |
-| `kroma-ci-demo@1.0.0` | `synthetic_demo` / SCENARIO | Малый детерминированный CI fixture |
-| `kroma-official-train-model@v006` | `model_output`, in-sample | 3 BS + 3 AF сцены, 2916 severity-зон, 81 AF point |
-| `kroma-official-train-reference@v006` | `reference` | 1757 зон official TRAIN GT тех же BS-сцен |
+| Dataset | Source | Contents |
+|---|---|---|
+| `kroma-ci-demo@1.0.0` | `synthetic_demo` / SCENARIO | Small deterministic CI fixture |
+| `kroma-official-train-model@v006` | `model_output`, in-sample | 3 BS and 3 AF scenes, 2,916 severity zones and 81 AF points |
+| `kroma-official-train-reference@v006` | `reference` | 1,757 official TRAIN ground-truth zones for the same BS scenes |
 
-Prepared-анализ **выбирает уже подготовленные результаты**, а не скачивает спутниковую съёмку для произвольного AOI. Вне покрытия API возвращает `no_coverage`. Встроенный каталог проверяет SHA256, классы, геометрии, даты и непересечение зон.
+Prepared analysis selects existing outputs. It does not download satellite imagery for arbitrary areas. Requests outside coverage return `no_coverage`. The catalog validates SHA256 hashes, classes, geometry, dates and non-overlapping zones.
 
-Воспроизведение компактного demo (без обучения):
+Rebuild the compact demonstration without training:
 
 ```bash
 OMP_NUM_THREADS=2 python scripts/build_train_prepared_dataset.py --bs 3 --af 3
 python -m app.cli.validate_dataset backend/app/prepared_data
 ```
 
-Построение другой выборки требует отдельной версии immutable-набора. Веса и TRAIN должны соответствовать handoff.
+A different scene selection requires a separate immutable dataset version. The weights and TRAIN data must match the documented handoff.
 
-## Модели и метрики
+## Models and metrics
 
-**CURRENT GOLD = v006; previous stable = v005.** AF не менялся между submission v001–v006. Порог AF — 0.765; 39 признаков LightGBM. BS: v003 neural ensemble → v004 physics/refiner → component classifier + refiner2 с red-edge v006. Решающие пороги BS: 0.3 / 0.8 / 0.2.
+**CURRENT GOLD = v006; previous stable = v005.** AF is unchanged across submissions v001–v006. The AF model uses 39 LightGBM features and a threshold of 0.765. The BS pipeline combines the v003 neural ensemble, the v004 physics/refiner stage, and the v006 component classifier and red-edge refiner2. BS thresholds are 0.3 / 0.8 / 0.2.
 
 | Submission | Public score |
 | --- | ---: |
@@ -113,15 +137,15 @@ python -m app.cli.validate_dataset backend/app/prepared_data
 | v005 | 0.8127 |
 | **v006** | **0.8176** |
 
-Public scores подтверждены командой. Они не равны локальному TRAIN F1 или BS OOF. BS v006 OOF: all-valid **0.43552**, strict **0.44677** по metadata эксперимента. TRAIN predictions — **in-sample**, поскольку финальные веса обучены на всём TRAIN. Подробности: [model card](docs/model_card.md), [метрики](docs/key_metrics.md), [research/report.md](research/report.md).
+Public leaderboard scores were confirmed by the team and differ from local TRAIN F1 and BS OOF metrics. BS v006 OOF scores are **0.43552** for all valid pixels and **0.44677** under the strict policy. TRAIN predictions are **in-sample**, because final weights were trained on all TRAIN data. See the [model card](docs/model_card.md), [key metrics](docs/key_metrics.md) and [research report](research/report.md).
 
-## Веса и конфигурация
+## Weights and configuration
 
-`KROMA_ML_ARTIFACTS_PATH` задаёт единственный production root, по умолчанию `ml/artifacts`. Неявного fallback на исследовательские файлы нет. `python scripts/mount_artifacts.py` проверяет все 7 текущих артефактов до копирования; `--source <bundle> --dest <directory>` переносит валидированный комплект с manifest. Не скачивает и не обучает модели.
+`KROMA_ML_ARTIFACTS_PATH` sets the production artifact root, which defaults to `ml/artifacts`. There is no implicit fallback to research files. `python scripts/mount_artifacts.py` validates all 7 current artifacts before copying; `--source <bundle> --dest <directory>` copies a validated bundle and its manifest. It does not download or train models.
 
-Пути и контрольные суммы: [ml/artifacts/README.md](ml/artifacts/README.md). В текущем Git входят оба neural checkpoint, AF bundle, physics JSON, v004 refiner и v006 refiners; v005 файлы сохранены для истории. Health остаётся доступным при отсутствии весов, inference сообщает недоступность.
+Paths and checksums are documented in [ml/artifacts/README.md](ml/artifacts/README.md). Git includes both neural checkpoints, the AF bundle, physics JSON, the v004 refiner and the v006 refiners. The v005 files remain for historical reference. Health endpoints remain available when weights are missing; inference reports that it is unavailable.
 
-## Competition inference и воспроизводимость
+## Competition inference and reproducibility
 
 ```bash
 python inference.py --data-dir data/test --output tmp/submission.csv \
@@ -129,39 +153,39 @@ python inference.py --data-dir data/test --output tmp/submission.csv \
   --verify-against artifacts/submissions/submission_v006.csv
 ```
 
-Default — v006. Pipeline не запускает REST, векторизацию, аналитику или DB. Сверяются ключи/порядок sample_submission, 447 строк для данного TEST, RLE, отсутствие NaN/дубликатов и пересечений BS-классов. Ошибка chip останавливает выдачу submission; пустая маска не выдаётся за успешный fallback.
+The default is v006. The pipeline does not start REST services, vectorization, analytics or a database. It validates sample_submission keys and order, the 447 rows for this TEST dataset, RLE encoding, the absence of NaNs and duplicate keys, and non-overlapping BS classes. A chip error stops submission generation instead of silently substituting an empty mask.
 
-На машине интеграции полный прогон 180 AF + 89 BS дал **CSV-identical v006**, 452.88 с при 2 workers × 2 threads, BS neural stage 19.81 с. Это измерение при параллельных проверках; время зависит от железа. Побитовое равенство между разными Torch/device версиями не обещается. Seeds training-конфигов — 42; production inference не обучает модели. Для своей платформы выполняйте `--verify-against`.
+On the integration machine, the full 180 AF + 89 BS run produced **CSV-identical v006** output in 452.88 seconds with 2 workers × 2 threads; the BS neural stage took 19.81 seconds. Other checks were running concurrently, and runtime depends on hardware. Bitwise equality across Torch versions and devices is not guaranteed. Training configurations use seed 42; production inference does not train models. Run `--verify-against` on your platform.
 
-## Обучение и исследовательская история
+## Training and research history
 
-Обучение не требуется для запуска поставки. В этом integration-проходе модели не переобучались. Исторические команды и разбиения сохранены в [ml/README.md](ml/README.md), [research/report.md](research/report.md), `research/experiments/af_final_model.py`, `bs_track.py`, `bs_v004_build.py`, `bs_v005_build.py`, `bs_v006_infer.py`. Последний исследовательский скрипт **содержит обучение** full refiners; для готового inference используйте корневой `inference.py`. OOF-кэши/промежуточные массивы не являются обязательными runtime-артефактами и не входят в Git.
+Training is not required to run the delivered models. The integration pass did not retrain them. Historical commands and splits are recorded in [ml/README.md](ml/README.md), [research/report.md](research/report.md), `research/experiments/af_final_model.py`, `bs_track.py`, `bs_v004_build.py`, `bs_v005_build.py` and `bs_v006_infer.py`. The last research script **trains full refiners**; use the root `inference.py` for inference with existing weights. OOF caches and intermediate arrays are not required at runtime and are excluded from Git.
 
-## REST API и экспорт
+## REST API and Export
 
-| Endpoint | Результат |
+| Endpoint | The result |
 | --- | --- |
-| `GET /health`, `GET /models` | Liveness, AF/BS readiness, версия, missing artifacts, device policy |
-| `GET /api/v1/models`, `/api/v1/ml/status` | Manifest provenance и model status |
-| `GET /api/v1/datasets/train?kind=bs` | Настоящий TRAIN index и counts |
-| `GET /api/v1/datasets/train/{id}` | Метаданные и доступность inspector |
+| `GET /health`, `GET /models` | Liveness, AF/BS readiness, version, missing artifacts, device policy |
+| `GET /api/v1/models`, `/api/v1/ml/status` | Manifest provenance and model status |
+| `GET /api/v1/datasets/train?kind=bs` | This TRAIN index and counts |
+| `GET /api/v1/datasets/train/{id}` | Metadata and availability of inspector |
 | `POST /api/v1/inference/af`, `/inference/bs` | JSON `{"chip_id":"..."}` → mask metadata, metrics, runtime, geometry |
 | `GET /api/v1/datasets/train/{id}/overlay/{layer}` | PNG: pred / gt / error / probability |
-| `GET /api/v1/datasets/train/{id}/rasters` | NPZ: исходные mask/probability/GT/valid, version |
-| `GET /api/v1/datasets/train/{id}/geometry?layer=pred` | WGS84 validation features для карты |
+| `GET /api/v1/datasets/train/{id}/rasters` | NPZ: original mask/probability/GT/valid, version |
+| `GET /api/v1/datasets/train/{id}/geometry?layer=pred` | WGS84 validation features for the map |
 | `GET /api/v1/datasets/train/{id}/export?format=geojson` | GeoJSON; `format=shp` → ZIP Shapefile |
-| `GET /api/v1/analysis/datasets`, `/analysis/readiness` | Каталог и проверка целостности prepared-наборов |
+| `GET /api/v1/analysis/datasets`, `/analysis/readiness` | Catalogue and Integrity Check of Prepared Sets |
 | `GET /api/v1/analysis` | `dataset_id`, `dataset_version`, `bbox`, `from`, `to` |
-| `GET /api/v1/analysis/export/contours` | GeoJSON текущего result_id |
-| `GET /api/v1/analysis/export/shapefile` | ZIP с SHP/SHX/DBF/PRJ/CPG |
-| `GET /api/v1/analysis/export/report?format=csv` | CSV; `format=json` → полный JSON |
-| `GET /api/v1/live/status`, `/live/hotspots`, `/live/incidents` | RAW FIRMS и эвристические кластеры |
+| `GET /api/v1/analysis/export/contours` | GeoJSON current result_id |
+| `GET /api/v1/analysis/export/shapefile` | ZIP with SHP/SHX/DBF/PRJ/CPG |
+| `GET /api/v1/analysis/export/report?format=csv` | CSV; `format=json` → complete JSON |
+| `GET /api/v1/live/status`, `/live/hotspots`, `/live/incidents` | RAW FIRMS and heuristic clusters |
 
-Все exports анализа требуют `expected_result_id`, равный отображаемому результату; mismatch → 409. На HTTP-ответах есть `X-Runtime-Ms`, inference дополнительно возвращает model/vectorize/total. Shapefile ограничивает имена DBF-полей десятью символами: `model_version` → `model_ver`, `scene_id` сохраняется, CRS — WGS84. GeoJSON содержит `contour_id`, scene/event, severity, area_ha, model_version, source.
+All exports of analysis require `expected_result_id` equal to the displayed result; mismatch → 409. HTTP responses have `X-Runtime-Ms`, inference returns model/vectorize/total. Shapefile limits DBF field names to ten characters: `model_version` → `model_ver`, `scene_id` saved, CRS WGS84. GeoJSON contains `contour_id`, scene/event, severity, area_ha, model_version, source.
 
-Площадь BS-пикселя **20 × 20 м = 0.04 га**. TRAIN inference считает площадь в исходной проекции растра. AOI analysis обрезает несглаженные векторы и считает EPSG:6933; небольшая разница с номинальной UTM-пиксельной площадью ожидаема и метод указан в `calculation`. UI не определяет отчётную площадь.
+Area of BS-pixel **20 x 20 m = 0.04 ha**. TRAIN inference counts the area in the original raster projection. AOI analysis trims unsmoothed vectors and calculates EPSG:6933; slight difference from the nominal UTM pixel area is expected and the method is specified in `calculation`. UI does not define the reporting area.
 
-Пример:
+Example:
 
 ```bash
 curl -fsS http://localhost:8000/health
@@ -169,18 +193,18 @@ curl -fsS -H 'Content-Type: application/json' -d '{"chip_id":"BS_tr_000001"}' ht
 curl -fSLo tmp/contours.zip 'http://localhost:8000/api/v1/datasets/train/BS_tr_000001/export?format=shp'
 ```
 
-## Docker и deployment
+## Docker and deployment
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-Compose монтирует TRAIN и веса read-only; пути `KROMA_TRAIN_HOST_PATH` / `KROMA_ML_ARTIFACTS_HOST_PATH` можно изменить в `.env`. Backend image устанавливает geo + ml + backend и CPU Torch; GPU deployment требует соответствующего Torch runtime. Необязательная БД: `docker compose --profile persistence up db`.
+Compose mounts TRAIN data and weights read-only. Set `KROMA_TRAIN_HOST_PATH` and `KROMA_ML_ARTIFACTS_HOST_PATH` in `.env` to change their host locations. The backend image installs geo, ml, backend and CPU Torch; GPU deployment requires a compatible Torch runtime. Start the optional database with `docker compose --profile persistence up db`.
 
-Production: `docker compose -f docker-compose.prod.yml up -d --build`; Caddy обслуживает API и frontend. `.github/workflows/deploy.yml` выкладывает main через release/health/rollback. При первом деплое `deploy/prepare-train.sh` скачивает официальный TRAIN (~2.14 ГБ) в `/opt/kroma/shared/train`, который монтируется в backend и сохраняется между релизами. Для загрузки требуется не менее 3 ГиБ свободного места в `/opt/kroma/shared`. Integration-проход сам по себе не публикует изменения и не запускает deploy.
+For production, run `docker compose -f docker-compose.prod.yml up -d --build`; Caddy serves the API and frontend. The original deployment workflow uses release, health-check and rollback steps. Its deployment job is restricted to `BitsOfDanya/KROMA`, so pushes to this personal copy do not deploy to the original server. On first deployment, `deploy/prepare-train.sh` downloads official TRAIN data (about 2.14 GB) into `/opt/kroma/shared/train`, which persists between releases and is mounted in the backend. Allow at least 3 GiB of free space in `/opt/kroma/shared`.
 
-## Проверки
+## Checks
 
 ```bash
 .venv/bin/ruff check .
@@ -191,14 +215,14 @@ npm test --prefix frontend
 npm run build --prefix frontend
 ```
 
-Проверены API, площади, CRS, geometry intersection, Shapefile roundtrip, hash/missing-artifact behavior, TRAIN previews/overlays, полный submission и frontend. Подробности, страницы, timings и ограничения: [приёмка](docs/qa/final-integration.md). Стабильная демонстрация: [docs/demo_script.md](docs/demo_script.md).
+The recorded integration checks covered API behavior, areas, CRS, geometry intersections, Shapefile round trips, missing artifacts and hashes, TRAIN previews and overlays, the complete submission, and the frontend. See [acceptance results](docs/qa/final-integration.md) and the [demo script](docs/demo_script.md).
 
-## Ограничения
+## Limitations
 
-- Analysis принимает bbox + даты; произвольный polygon в этом UI/API не заявлен. Автоматического скачивания Sentinel нет.
-- Реальные prepared outputs охватывают 6 выбранных TRAIN-сцен; это демонстрация тракта, не независимый test качества.
-- Events и обзорная аналитика остаются явно маркированным SCENARIO. Нет доказанной связи отдельного AF chip с конкретным BS fire event; такая связь не выдумывается.
-- LIVE требует `NASA_FIRMS_API_KEY`; без ключа возвращает offline. RAW FIRMS не эквивалентен входу AF-модели, LIVE не рассчитывает BS/прогноз.
-- Карта использует внешние тайлы, которые требуют сети. TEST никогда не отображается на карте.
-- Кэш и настройки процесса неперсистентны; PostGIS не подключён к текущим сервисам. Нет авторизации/ролей.
-- На новой TRAIN-сцене веб BS запускает отдельный изолированный neural subprocess; competition использует batch. Persistent worker не внедрялся без отдельной гарантии точного равенства.
+- Analysis supports a bounding box and dates; arbitrary polygons and automatic Sentinel downloads are not implemented.
+- Real prepared outputs cover 6 selected TRAIN scenes. This demonstrates the processing path and is not an independent quality evaluation.
+- Events and overview analytics are explicitly labeled SCENARIO. No verified link between an individual AF chip and a particular BS fire event is claimed.
+- LIVE requires `NASA_FIRMS_API_KEY` and reports offline status without it. Raw FIRMS data is not equivalent to AF model input; LIVE does not compute BS or forecasts.
+- The map uses external tiles that require a network. TEST is never displayed on the map.
+- Caches and process settings are not persistent. PostGIS is not connected to current services; authentication and roles are not implemented.
+- Web BS inference starts a separate neural subprocess for each uncached TRAIN scene; competition inference uses batching. A persistent worker has not been introduced without a separate guarantee of identical results.

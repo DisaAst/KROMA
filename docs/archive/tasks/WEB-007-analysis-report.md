@@ -1,50 +1,50 @@
-# WEB-007. Справка по выбранной территории и периоду
+# WEB-007. Information on the selected territory and period
 
-Статус: DONE (19.09.2026). Приоритет: P0. Область: frontend. Критерий: R3.
+Status: DONE (19.09.2026)). Priority: P0. Area: frontend. Criterion: R3.
 
-Зависимости: WEB-004, WEB-005. Используется совместно с WEB-006/008.
+Dependencies: WEB-004, WEB-005. Used in conjunction with WEB-006/008.
 
-## Цель и проблема
+## Purpose and problem
 
-Показать воспроизводимую справку по конкретному запросу, а не общую демонстрационную статистику. Сейчас в сводке есть общая/сильно повреждённая площадь, но нет полного территориального отчёта по трём классам.
+Show a reproducible reference for a specific query, rather than general demonstration statistics. There is now a total/severely damaged area in the summary, but there is no complete territorial report for the three classes.
 
-## Содержание справки
+## Contents of the certificate
 
-- Применённая область: координаты/название набора, доступное покрытие.
-- Период, UTC и правило отбора гарей по дате послепожарной съёмки.
-- Общая выгоревшая площадь, количество уникальных гарей, термоточек.
-- Три отдельные строки: слабое/среднее/сильное поражение — площадь в га и доля от общей выгоревшей площади.
-- Компактная диаграмма распределения с текстовыми значениями; таблица остаётся основной доступной формой.
-- Набор, версия обработки, scene IDs/источники, `result_id` и время формирования.
-- Ограничения: неполное покрытие, невалидные/облачные пиксели, отсутствие одного из источников.
-- Раскрываемый блок «Как рассчитано»: метод площади, CRS, обрезка по AOI и устранение дублей.
-- Кнопки экспорта WEB-008.
+- Applied area: coordinates / name of the set, available coverage.
+- Period, UTC and the rule for selecting hares by date of post-fire shooting.
+- Total burned area, number of unique hares, thermal points.
+- Three separate lines: weak/medium/severe lesion - area in ha and proportion of total burned-out area.
+- Compact distribution diagram with text values; table remains the main available form.
+- Set, processing version, scene IDs/sources, `result_id` and formation time.
+- Restrictions: Incomplete coverage, invalid/cloud pixels, lack of any source.
+- Disclosed block "How calculated": area method, CRS, AOI trimming and elimination of duplicates.
+- Export buttons WEB-008.
 
-## Что сделать
+## What to do
 
-1. Создать компонент справки внутри feature анализа. Переиспользовать `MetricCard`, `Card`, `StateMessage` и общие элементы.
-2. Получать значения из результата WEB-004. Не суммировать округлённые подписи и не использовать старые weekly stats.
-3. Показывать все три класса, даже когда у одного ноль. Уточнить понятные русские названия без смешения severity пожара и severity поражения растительности.
-4. Отдельно показать площадь выбранной/обследованной/валидной территории, когда она известна. Не смешивать её с выгоревшей площадью.
-5. Различать ноль, `null`, отсутствие покрытия и загрузку. При общей площади 0 не показывать NaN/Infinity или искусственные 100%.
-6. Согласовать округление, единицы и пояснение возможной разницы сумм отображённых округлённых значений. CSV/JSON сохраняют исходную точность.
-7. При изменении черновика сохранить подпись применённого запроса: «Параметры изменены — выполните расчёт».
-8. В пустом/частичном результате объяснить, что именно удалось обследовать и какие выводы делать нельзя.
+1. Create a help component inside feature analysis. Reuse `MetricCard`, `Card`, `StateMessage` and common elements.
+2. Receive values from the result WEB-004. Do not add up rounded signatures or use old weekly stats.
+3. Show all three classes, even when one has zero. Clarify understandable Russian names without mixing the severity of fire and the severity of vegetation damage.
+4. Separately show the area of the selected / surveyed / invalid territory, when it is known. Do not mix it with a burnt out area.
+5. Distinguish zero, `null`, lack of coverage and load. For total area 0 do not show NaN/Infinity or artificial 100%.
+6. Agree rounding, units and explanation of possible differences in the sums of the displayed rounded values. CSV/JSON maintains original accuracy.
+7. When changing the draft, save the signature of the applied request: "Parameters changed - perform the calculation".
+8. In an empty/partial result, explain what exactly was examined and what conclusions cannot be drawn.
 
-## Критерии приёмки
+## Acceptance criteria
 
-- [ ] Есть итог и все три класса с площадями и долями.
-- [ ] Числа относятся к тому же `result_id`, что карта и скачиваемые файлы.
-- [ ] Класс с 0 га отличается от недоступного значения.
-- [ ] Пользователь видит, по какой территории, датам и источнику составлена справка.
-- [ ] Неполный охват не выдаётся за полное отсутствие пожаров.
-- [ ] Тексты и таблица читаемы в обеих темах, доступны с клавиатуры/скринридером.
-- [ ] Вывод содержит ровно наблюдаемые/рассчитанные значения, без неподтверждённых оценок ущерба или точности модели.
+- [ ] There is a result and all three classes with areas and shares.
+- [ ] The numbers refer to the same `result_id` as the map and downloaded files.
+- [ ] A class with 0 ha differs from an unavailable value.
+- [ ] The user sees on which territory, dates and source the reference is made.
+- [ ] Incomplete coverage is not given for the total absence of fires.
+- [ ] Texts and table are readable in both themes, accessible from keyboard/screen reader.
+- [ ] The output contains exactly observable/calculated values, without unconfirmed damage estimates or model accuracy.
 
-## Проверки
+## Checks
 
-Все классы присутствуют; один класс отсутствует; площадь 0; очень малая площадь; большие значения; частичная/неизвестная валидность; только термоточки без BS; BS без термоточек; изменение формы после успешного расчёта; сравнение чисел с API и экспортом.
+All classes are present; one class is absent; area 0; very small area; large values; partial/unknown validity; only thermal points without BS; BS without hotspots; shape change after successful calculation; number comparison with API and export.
 
-## Вне задачи
+## Outside the task
 
-PDF, лесовосстановительные рекомендации, финансовая оценка ущерба, сезонная аналитика по всей стране и независимый расчёт в браузере.
+PDF, reforestation recommendations, financial assessment of damage, seasonal analytics across the country and independent calculation in the browser.

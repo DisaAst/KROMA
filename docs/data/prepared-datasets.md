@@ -1,12 +1,12 @@
-# Подготовленные наборы анализа
+# Prepared analysis kits
 
-## Назначение
+## Purpose
 
-Backend читает подготовленные результаты только через неизменяемый `manifest.json`. Набор не обращается к FIRMS или спутниковому архиву во время пользовательского запроса. Одна версия должна после рестарта давать те же геометрии, числа и `result_id`.
+Backend only reads the prepared results through immutable `manifest.json`. The kit does not access the FIRMS or satellite archive at the time of a user request. One version should give the same geometry, numbers and `result_id` after restart.
 
-Встроенный `backend/app/prepared_data` — малый `synthetic_demo` для CI. Для демонстрации качества модели нужен отдельный разрешённый набор с `origin: model_output`; менять origin у fixture запрещено.
+Built-in `backend/app/prepared_data` is a small `synthetic_demo` for CI. To demonstrate the quality of the model, you need a separate allowed set with `origin: model_output`; it is forbidden to change the origin of the fixture.
 
-## Структура каталога
+## Catalogue structure
 
 ```text
 prepared-dataset/
@@ -15,73 +15,73 @@ prepared-dataset/
 └── burn_zones.geojson
 ```
 
-`KROMA_PREPARED_DATA_PATH` может указывать на этот каталог, непосредственно на manifest или на родительский каталог с несколькими дочерними наборами. Backend загружает только версии, у которых manifest, checksum и содержимое прошли проверку.
+`KROMA_PREPARED_DATA_PATH` can point to this directory, directly to the manifest or to a parent directory with multiple child sets. Backend only downloads versions that have manifest, checksum and content verified.
 
 ## Manifest v1
 
-Обязательные группы полей:
+Mandatory field groups:
 
-| Поля | Смысл |
+| Fields | Meaning |
 | --- | --- |
-| `dataset_id`, `dataset_version`, `schema_version` | Стабильная идентичность и immutable-версия |
-| `origin` | Только `model_output`, `reference` или `synthetic_demo` |
-| `processing_version` | Версия весов/алгоритма или идентификатор запуска |
-| `available_from`, `available_to`, `extent` | Доступный период и bbox WGS84 |
-| `af_coverage`, `bs_coverage`, `bs_valid_coverage` | Раздельное покрытие термоточек, картирования и валидных BS-пикселей |
-| `source_crs`, `area_crs` | CRS артефакта и выбранная равноплощадная/метрическая CRS расчёта |
-| `mask` | Классы 0/1/2/3, nodata, resolution и правило validity |
-| `scenes` | Реальные scene IDs, спутник, UTC-время, роль, известная облачность |
-| `artifacts` | Относительный путь и SHA-256 каждого файла |
-| `license`, `attribution`, `distribution` | Право использования и ограничения передачи |
-| `example` | Содержательный bbox и даты для UI, Swagger и smoke-теста |
+| `dataset_id`, `dataset_version`, `schema_version` | Stable identity and immutable version |
+| `origin` | Only `model_output`, `reference` or `synthetic_demo` |
+| `processing_version` | Balance/algorithm version or launch identifier |
+| `available_from`, `available_to`, `extent` | Available period and bbox WGS84 |
+| `af_coverage`, `bs_coverage`, `bs_valid_coverage` | Separate coverage of hotspots, mapping and valid BS pixels |
+| `source_crs`, `area_crs` | CRS artifact and selected equal-square/metric CRS calculation |
+| `mask` | Classes 0/1/2/3, nodata, resolution and validation rule |
+| `scenes` | Real Scene IDs, Satellite, UTC Time, Role, Known Clouds |
+| `artifacts` | Relative path and SHA-256 of each file |
+| `license`, `attribution`, `distribution` | Right to use and limit transfers |
+| `example` | Content bbox and dates for UI, Swagger and smoke test |
 
-Путь артефакта не может выходить из каталога manifest. Абсолютные developer-paths и секреты не допускаются.
+The path of the artifact cannot leave the manifest catalog. Absolute developer-paths and secrets are not allowed.
 
-## GeoJSON термоточек
+## GeoJSON heatpoints
 
-`hotspots.geojson` — `FeatureCollection` точек WGS84. У каждой feature обязательны уникальный `id`, `properties.id`, UTC `acquired_at` и честное название `source`. Допустимы исходные показатели вроде FRP, но FRP не интерпретируется как площадь.
+`hotspots.geojson` - `FeatureCollection` points WGS84. Each feature must have a unique `id`, `properties.id`, UTC `acquired_at` and the honest name `source`. Initials like FRP are acceptable, but FRP is not interpreted as area.
 
-Точки фильтруются по `[from 00:00 UTC, to + 1 день 00:00 UTC)` и включаются на границе bbox. Повторный ID отклоняется при загрузке.
+Points are filtered by `[from 00:00 UTC, to + 1 день 00:00 UTC)` and turned on at the bbox boundary. Repeated ID is rejected when downloading.
 
-## GeoJSON зон
+## GeoJson Zones
 
-`burn_zones.geojson` содержит только зоны классов, без отдельного полного контура, который мог бы удвоить площадь. Геометрия — Polygon или MultiPolygon WGS84, включая holes.
+`burn_zones.geojson` contains only class zones, with no separate complete contour that could double the area. Geometry – Polygon or MultiPolygon WGS84, including holes.
 
-Обязательные properties:
+Mandatory properties:
 
 - `id`, `burn_event_id`, `assessment_id`;
-- `class_id`: 1, 2 или 3;
-- `severity`: соответственно `low`, `moderate`, `high`;
+- `class_id`: 1, 2 or 3;
+- `severity`: `low`, `moderate`, `high`;
 - UTC `after_acquired_at`;
-- `is_complete`; частичная assessment не выбирается как полная;
+- `is_complete`; partial assessment is not selected as full;
 - `scene_ids`.
 
-Внутри одной assessment классы не могут пересекаться по положительной площади. Для одного `burn_event_id` сервер выбирает последнюю полную assessment, дата которой попала в запрос. Затем геометрия пересекается с AOI, и только после этого площадь считается в `area_crs`.
+Within one assessment, classes cannot intersect in a positive area. For one `burn_event_id`, the server selects the last full assessment, the date of which was included in the request. The geometry then intersects with the AOI, and only after that is the area counted in `area_crs`.
 
-## Проверка
+## Verification
 
 ```bash
 python -m app.cli.validate_dataset /path/to/prepared-dataset
 ```
 
-Команда проверяет manifest schema, наличие и SHA-256, JSON/GeoJSON, уникальность ID, времена с timezone, координаты, допустимые классы, валидность геометрий и положительные перекрытия классов. Возврат `0` означает, что набор можно публиковать в каталоге; `1` — что backend не должен выдавать из него результат.
+The team checks manifest schema, presence and SHA-256, JSON/GeoJSON, uniqueness of ID, times with timezone, coordinates, permissible classes, validity of geometries and positive class overlaps. The return of `0` means that the set can be published in the directory; `1` - that the backend should not give out a result from it.
 
-После проверки:
+After checking:
 
 ```bash
 curl -fsS http://localhost:8000/api/v1/analysis/readiness
 curl -fsS http://localhost:8000/api/v1/analysis/datasets
 ```
 
-## Подготовка из растровой маски
+## Raster mask preparation
 
-`kroma_geo.vector.vectorize_class_mask` предоставляет проверяемую базовую векторизацию малых категориальных масок 0–3 с affine transform, holes и несколькими компонентами. Для производственных растров допустим rasterio/GDAL pipeline, но его выход обязан пройти тот же manifest validator и независимую сверку площади с пиксельной маской.
+`kroma_geo.vector.vectorize_class_mask` provides verifiable basic vectorization of small categorical masks 0-3 with affine transform, holes and multiple components. For production rasters, a rasterio/GDAL pipeline is allowed, but its output must undergo the same manifest validator and independent verification of the area with a pixel mask.
 
-Nodata/облачность не равны классу 0. Если валидной области нет, API возвращает `no_valid_data` и `null` для площадей, а не ложные нули.
+Nodata/cloud is not class 0. If there is no valid domain, the API returns `no_valid_data` and `null` to areas rather than false zeros.
 
-## Передача и обновление
+## Transfer and update
 
-- Хранить единственную копию ограниченного набора внутри временного контейнера нельзя. В Compose host-каталог монтируется read-only через `KROMA_PREPARED_DATA_HOST_PATH`.
-- При любом изменении артефакта пересчитать SHA-256 и выпустить новую `dataset_version`; старую версию не менять на месте.
-- Не публиковать сцены, веса, ключи и производные данные, если лицензия этого не разрешает. Организаторам передаётся разрешённый архив или защищённая ссылка вместе с checksum.
-- После рестарта повторить catalog → analysis → exports и сверить `result_id` и площади.
+- You cannot store a single copy of a limited set inside a temporary container. Compose host directory is mounted read-only via `KROMA_PREPARED_DATA_HOST_PATH`.
+- Any alteration to the artifact, recalculate SHA-256 and release a new `dataset_version`; do not change the old version in place.
+- Do not publish scenes, weights, keys and derivatives unless the license permits it. Organizers are provided with an authorized archive or secure link together with checksum.
+- After the restart, repeat catalog → analysis → exports and compare `result_id` and areas.

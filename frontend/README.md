@@ -1,11 +1,11 @@
 # Frontend
 
-Существующий дизайн KROMA: Next.js / React / TypeScript, MapLibre, Zustand, TanStack Query.
+KROMA: Next.js / React / TypeScript, MapLibre, Zustand, TanStack Query.
 
-Из корня: `npm ci --prefix frontend`, затем `npm run dev --prefix frontend`. Backend по умолчанию http://127.0.0.1:8000; `KROMA_BACKEND_URL` меняет proxy при запуске/сборке. `NEXT_PUBLIC_API_BASE_URL` задаёт прямой origin API вместо proxy, если это нужно deployment.
+From the root: `npm ci --prefix frontend`, then `npm run dev --prefix frontend`. Backend by default http://127.0.0.1:8000; `KROMA_BACKEND_URL` changes the proxy at start-up/build. `NEXT_PUBLIC_API_BASE_URL` specifies the direct origin API instead of the proxy if deployment is required.
 
-Страницы: Overview `/`, Events `/events`, Analytics `/analytics`, Analysis `/analytics?tab=area`, Data `/explorer`, Predict `/predict`, About `/about`, Research `/research`. Operator menu содержит сведения о команде.
+Pages: Overview `/`, Events `/events`, Analytics `/analytics`, Analysis `/analytics?tab=area`, Data `/explorer`, Predict `/predict`, About `/about`, Research `/research`. The Operator menu contains information about the team.
 
-SCENARIO явно помечает синтетическую динамику. TRAIN prediction показывает in-sample предупреждение. TEST не наносится на карту. Predict принимает существующий полный TRAIN package; JPEG не выдаётся за вход модели.
+SCENARIO clearly flags synthetic dynamics. TRAIN prediction shows in-sample warning. TEST is not on the map. Predict accepts existing full TRAIN package; JPEG is not issued as a model entry.
 
-Проверки: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` из `frontend`. Полная инструкция и demo — в корневом [README](../README.md).
+Checks: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` from `frontend`. Full instruction and demo - in the root [README](../README.md).

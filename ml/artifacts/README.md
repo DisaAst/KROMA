@@ -1,8 +1,8 @@
 # Production weights
 
-CURRENT GOLD: **v006**, previous stable: v005. `manifest.json` — authoritative registry: SHA256, размеры, входы, выходы, пороги, provenance и runtime. Все 7 текущих файлов включены в эту Git-поставку (~83 MB); дополнительная копия v005 сохранена для истории.
+CURRENT GOLD: **v006**, previous stable: v005. `manifest.json` - authoritative registry: SHA256, dimensions, inputs, outputs, thresholds, provenance and runtime. All 7 current files are included in this Git Delivery (~83 MB); an additional copy of v005 is saved for history.
 
-| Ключ | Путь от KROMA_ML_ARTIFACTS_PATH |
+| Key key | The Way from KROMA_ML_ARTIFACTS_PATH |
 | --- | --- |
 | af_model | af/af_fulltrain_model.joblib |
 | bs_neural_ndvi | bs/neural/bs_full_ndvi_ohem40.pt |
@@ -12,6 +12,6 @@ CURRENT GOLD: **v006**, previous stable: v005. `manifest.json` — authoritative
 | bs_component | bs/v006/component_full_v006_rededge.txt |
 | bs_refiner2 | bs/v006/refiner2_full_v006_rededge.txt |
 
-Проверка: `python scripts/mount_artifacts.py`. Копирование полного комплекта: `python scripts/mount_artifacts.py --source ml/artifacts --dest /path/to/bundle`. Затем `KROMA_ML_ARTIFACTS_PATH=/path/to/bundle`. Указанный root является единственным источником: скрытого fallback на research нет.
+Verification: `python scripts/mount_artifacts.py`. Copying the complete set: `python scripts/mount_artifacts.py --source ml/artifacts --dest /path/to/bundle`. Then `KROMA_ML_ARTIFACTS_PATH=/path/to/bundle`. This root is the only source: there is no hidden fallback on research.
 
-Если архив поставки исключил бинарные файлы, получите у команды **полный каталог ml/artifacts того же commit**, проверьте каждый SHA256 командой выше. Не переименовывайте произвольный `.pt` в ожидаемое имя. Не запускайте обучение ради подготовки production-весов. Проверка отсутствующих файлов: `/models`; при замене весов перезапустите backend.
+If the supply archive has excluded binary files, get from the team **full directory of ml/artifacts of the same commit**, Check each SHA256 with the command above. Do not rename arbitrary `.pt` to the expected name. Do not start training for the sake of preparing production weights. Check for missing files: `/models`; restart backend when you replace weights.

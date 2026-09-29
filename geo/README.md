@@ -1,7 +1,7 @@
 # Geo
 
-`kroma_geo` предоставляет измерения, CRS-преобразования, raster/vector conversion, проверку геометрий, clipping и контекст AOI. Зависимости pyproj, shapely и rasterio объявлены в `pyproject.toml`.
+`kroma_geo` provides measurements, CRS transformations, raster/vector conversion, geometry verification, clipping and AOI context. Dependencies pyproj, shapely and rasterio declared in `pyproject.toml`.
 
-BS pixel area: 20×20 м = 0.04 га. Экспорт TRAIN считает площадь до преобразования в WGS84; analysis использует исходные контуры после обрезки AOI в равноплощадной EPSG:6933. Общие пиксельные границы densify до перепроекции, чтобы соседние severity-зоны не создавали численные пересечения. Проверка пересечений использует STRtree.
+BS pixel area: 20×20 m = 0.04 ha. TRAIN exports count the area before conversion to WGS84; analysis uses the original contours after pruning of the AOI in equal-size EPSG:6933. Common pixel boundaries of densify prior to reprojection so that neighboring severity zones do not create numerical intersections. Verification of intersections uses STRtree.
 
-Исторические контекстные модули допускают Polygon/MultiPolygon AOI; текущий service analysis контракт принимает bbox + даты. Реальные OSM/WorldCover/DEM источники и ограничения описаны в [каталоге источников](../docs/data/sources.md). TEST геопривязка запрещена контрактом проекта.
+Historical contextual modules allow Polygon/MultiPolygon AOI; current service analysis contract accepts bbox+ dates. Real OSM/WorldCover/DEM sources and limitations are described in the [source catalogue](../docs/data/sources.md). TEST geo-reference is prohibited by the project contract.

@@ -1,11 +1,11 @@
 # ML
 
-Production contract: `kroma_ml.service.predict_af` / `predict_bs`. CURRENT GOLD v006. Competition CLI: `python inference.py --data-dir data/test --output tmp/submission.csv`. Backend и competition используют один adapter. Полный запуск, веса, API и ограничения — в [README](../README.md); описание моделей — [model card](../docs/model_card.md); перенос из исследований — [handoff](../docs/ml_handoff.md).
+Production contract: `kroma_ml.service.predict_af` / `predict_bs`. CURRENT GOLD v006. Competition CLI: `python inference.py --data-dir data/test --output tmp/submission.csv`. Backend and competition use a single adapter. Full Launch, Weights, APIs and Limitations [README](../README.md); modelling — [model card](../docs/model_card.md); transference — [handoff](../docs/ml_handoff.md).
 
-## Исследования и обучение
+## Research and training
 
-В product integration обучение не выполнялось. Исторические training-программы и результаты сохранены в `research/experiments` и [research/report.md](../research/report.md).
+In product integration, training was not performed. Historical training programs and results are stored in `research/experiments` and [research/report.md](../research/report.md).
 
-AF full-train bundle воспроизводится исследовательским `python research/experiments/af_final_model.py` при наличии TRAIN и описанных в отчёте кэшей hard negatives. BS training-контракт доступен через `python research/experiments/bs_track.py --help`; конфигурации ансамбля и сохранённые normalization/channel_names перечислены в checkpoint metadata. Full refiners строились последовательно v004 → v005 → red-edge v006; `research/experiments/bs_v006_infer.py` содержит обучение и требует OOF/cache inputs. Это исследовательская цепочка, не команда установки production.
+AF full-train bundle is reproduced by research `python research/experiments/af_final_model.py` in the presence of TRAIN and the hard negatives caches described in the report. BS training contract is available via `python research/experiments/bs_track.py --help`; ensemble configurations and stored normalization/channel_names are listed in checkpoint metadata. Full refiners built in series v004 → v005 → red-edge v006; `research/experiments/bs_v006_infer.py` contains training and requires OOF/cache inputs. This is a research chain, not a production installation team.
 
-Для запуска готовой модели достаточно 7 файлов из `artifacts/manifest.json`. Файлы raw/OOF в `data/processed` не нужны inference. Архивные DBSCAN/thermal-memory/priority модули сохранены как исследовательская история; LIVE backend не выдаёт их за обученный `P(real wildfire)`.
+7 files from `artifacts/manifest.json` are enough to run the finished model. `data/processed` raw/OOF files don’t need inference. Archival DBSCAN/thermal-memory/priority modules saved as research history; Live backend doesn't pass them off as trained `P(real wildfire)`.

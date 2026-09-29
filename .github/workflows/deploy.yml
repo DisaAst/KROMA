@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.repository == 'BitsOfDanya/KROMA'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

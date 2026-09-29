@@ -1,58 +1,58 @@
-# WEB-012. Финальная приёмка по критериям и демонстрация
+# WEB-012. Final acceptance by criteria and demonstration
 
-Статус: BLOCKED — ожидается real/model_output по WEB-002. Приоритет: P1, завершающая задача. Область: QA и команда. Критерии: R1, R2, R3.
+Status: BLOCKED – expected real/model_output at WEB-002. Priority: P1, the final task. Area: QA and team. Criteria: R1, R2, R3.
 
-Зависимости: WEB-001–011. Не закрывать только по успешной сборке или скриншотам UI.
+Dependencies: WEB-001-011. Do not close only on successful assembly or screenshots of the UI.
 
-## Цель
+## Purpose
 
-Подтвердить законченный веб-сценарий и подготовить демонстрацию, в которой эксперт может проследить путь от территории/дат до проверяемых файлов и чисел.
+Confirm a completed web scenario and prepare a demonstration in which an expert can trace the path from territory/dates to verifiable files and numbers.
 
-## Предусловия
+## Preconditions
 
-- Зафиксированы commit, dataset/version, processing version, manifest checksum и окружение.
-- Подготовлены bbox/даты для содержательного результата, частичного пересечения и пустого/непокрытого случая.
-- Есть ожидаемые числа и происхождение данных; результаты модели, эталон и demo различимы.
-- На машине демонстрации доступны набор и инструкция запуска; основные API не зависят от внешних ключей.
+- Demonstrate, dataset/version, processing version, manifest checksum and environment.
+- Prepared bbox/dates for meaningful result, partial intersection and empty/uncovered case.
+- There are expected numbers and the origin of the data; the results of the model, benchmark and demo are distinguishable.
+- On the demo machine, a set and start instruction are available; the basic APIs are independent of external keys.
 
-## Сценарий демонстрации
+## Scenario of the demonstration
 
-1. Запустить сервис по инструкции либо показать заранее запущенный экземпляр и точную команду воспроизведения.
-2. Открыть «Анализ территории», назвать источник и границы подготовленного набора.
-3. Выбрать область и даты, выполнить расчёт без ручного вмешательства на сервере.
-4. Показать AOI, термоточки и зоны трёх классов на карте, легенду и карточку зоны.
-5. Показать справку: общая площадь, три класса, доли, источник, период и ограничения.
-6. Скачать GeoJSON и CSV; открыть файлы, показать ID/class_id/area_ha и метаданные.
-7. Повторить запрос через cURL/OpenAPI без браузерного интерфейса, сверить result_id и числа.
-8. Уменьшить область так, чтобы она пересекала гарь, пересчитать и показать изменение площадей/контуров.
-9. Показать валидную пустую область и область без покрытия; объяснить различие «0» и «нет данных».
-10. Повторить исходный запрос и подтвердить воспроизводимость. Отдельно выполнить проверку после рестарта.
+1. Run the service according to the instructions or show a pre-launched instance and an exact playback command.
+2. Open "Analysis of the territory", name the source and boundaries of the prepared set.
+3. Select the area and dates, perform the calculation without manual intervention on the server.
+4. Show AOI, hotspots and zones of three classes on the map, legend and zone card.
+5. Show reference: total area, three classes, shares, source, period and restrictions.
+6. Download GeoJSON and CSV; open files, show ID/class_id/area_ha and metadata.
+7. Repeat the request via cURL/OpenAPI without a browser interface, verify result_id and numbers.
+8. Reduce the area so that it crosses the fumes, count and show the change of areas / contours.
+9. Show a valid empty area and an uncoated area; explain the difference between “0” and “no data”.
+10. Repeat the original request and confirm reproducibility. Separately perform checks after restart.
 
-Демонстрацию сделать короткой и связной; конкретную длительность согласовать с фактическим регламентом защиты, не придумывать его.
+Make the demonstration short and coherent; agree on the specific duration with the actual protection regulations, do not invent it.
 
-## Матрица доказательств
+## Matrix of evidence
 
-| Критерий | Что показываем | Что сохраняем в протоколе |
+| Criteria | What we show | What we keep in the record |
 | --- | --- | --- |
-| R1: работоспособность | Запуск, bbox+даты, ответ за конечное время, REST без UI | Команда, commit, версии, запрос, время, HTTP-результат |
-| R2: карта и контуры | Точки за период, гари, классы и скачивание GeoJSON | Файл, CRS, ID/класс/площадь, проверка валидности/обрезки |
-| R3: справка | Итог и три класса, CSV/JSON, совпадение с геометриями | Файлы, метод площади, проверка сумм, dataset/result ID |
+| R1: performance | Launch, bbox+dates, finite time response, REST without UI | Command, commit, versions, request, time, HTTP result |
+| R2: map and contours | Period Points, Burns, Classes and Download GeoJSON | File, CRS, ID/class/area, validation/trimming |
+| R3: reference | Summary and three classes, CSV/JSON, matching geometries | Files, area method, check amounts, dataset/result ID |
 
-## Финальный чек-лист
+## Final checklist
 
-- [ ] R1: инструкция и REST работают; запрос не требует ручного исправления данных/кода.
-- [ ] R2: объекты соответствуют AOI/периоду; зоны валидны, не дублируются и имеют обязательные атрибуты.
-- [ ] R3: площади рассчитаны из результатов, а не сгенерированы; три класса присутствуют, машиночитаемая справка доступна.
-- [ ] UI, API и файлы совпадают по содержательным данным и result_id.
-- [ ] Продемонстрировано различие отсутствия обнаружений, отсутствия покрытия и невалидных пикселей.
-- [ ] Origin и реальность снимков/результатов не вызывают ложных ожиданий.
-- [ ] Новая версия прошла CI и ручные проверки обеих тем/основного desktop- и mobile-сценария.
-- [ ] Перезапуск не изменяет данные фиксированного набора.
-- [ ] Есть список оставшихся ограничений с честным описанием, а не скрытые дефекты.
-- [ ] Понимаем, что закрытие этой задачи подтверждает готовность веб-раздела, но не гарантирует оценку жюри и не закрывает ML/submission.
+- [ ] R1: instruction and REST work; request does not require manual data/code correction.
+- [ ] R2: objects correspond to AOI/period; zones are valid, do not duplicate and have mandatory attributes.
+- [ ] R3: Areas are calculated from results, not generated; three classes are present; computer-readable help is available.
+- [ ] UI, API and files are the same in content data and result_id.
+- [ ] Demonstrated the difference between absence of detection, lack of coverage and invalid pixels.
+- [ ] Origin and the reality of images / results do not cause false expectations.
+- [ ] The new version passed CI and manual checks of both themes/main desktop and mobile scripts.
+- [ ] The restart does not change the fixed set data.
+- [ ] There is a list of remaining limitations with an honest description, not hidden defects.
+- [ ] We understand that closing this task confirms the readiness of the web section, but does not guarantee jury evaluation and does not close ML/submission.
 
-## Выходной артефакт
+## Exit artifact
 
-Протокол инженерной проверки создан в `docs/qa/web-acceptance.md`: дата, проверявший, окружение, commit, версии данных, запросы, времена, ожидаемые/фактические значения, результаты автоматических тестов и список ограничений. После получения разрешённого `model_output` и независимого clean-room witness его нужно дополнить финальными доказательствами. Скриншоты — дополнение, не единственное доказательство.
+An engineering verification protocol is created in `docs/qa/web-acceptance.md`: date verified, environment, commit, data versions, queries, times, expected/actual values, automatic test results and a list of restrictions. After obtaining an authorized `model_output` and an independent clean-room witness, it must be supplemented with final evidence. Screenshots are an addition, not the only proof.
 
-При дефекте завести конкретное исправление со ссылкой на WEB-задачу. Не отмечать весь веб завершённым, если есть только synthetic_demo или расходятся площади и экспорт.
+In case of defect, make a specific correction with a link to the WEB-task. Do not mark the entire web complete if there is only synthetic_demo or space and export diverge.

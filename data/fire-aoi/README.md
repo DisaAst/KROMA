@@ -1,47 +1,47 @@
-# Границы территории мониторинга
+# Borders of the monitoring territory
 
-Внешняя граница охвата датасета — Нижнее Поволжье и Подонье: Ростовская,
-Волгоградская, Астраханская области, запад и центр Саратовской области,
-Республика Калмыкия. 16 вершин, EPSG:4326, площадь около 435 тыс. км².
+External boundary coverage dataset — Lower Volga and Podonia: Rostov,
+Volgograd, Astrakhan regions, west and center of Saratov region,
+Republic of Kalmykia. 16 Tops, EPSG:4326plaza 435 thousand km2.
 
-Один и тот же полигон в трёх форматах — берите любой:
+The same polygon in three formats - take any:
 
-    fire_monitoring_aoi.geojson          RFC 7946, кодировка UTF-8
-    fire_monitoring_aoi.gpkg             GeoPackage, слой aoi
+    fire_monitoring_aoi.geojson          RFC 7946, UTF-8 encoding
+    fire_monitoring_aoi.gpkg             GeoPackage, aoi layer
     fire_monitoring_aoi_shapefile.zip    shp + shx + dbf + prj + cpg
 
-Отдельными файлами shp/shx/dbf/prj/cpg лежат рядом — в архиве они собраны
-вместе, чтобы не потерять ни один при пересылке. Файл .cpg обязателен:
-без него QGIS и ArcGIS читают dbf в системной кодировке и портят кириллицу
-в атрибутах.
+Separate files shp/shx/dbf/prj/cpg lie nearby - in the archive they are collected
+together, so as not to lose any of them during the transfer. .cpg file is required:
+Without it, QGIS and ArcGIS read dbf in system encoding and spoil the Cyrillic alphabet
+attributely.
 
-## Что внутри
+## What's inside?
 
-Три объекта:
+Three objects:
 
-| id | что это |
+| id | what |
 |---|---|
-| `aoi` | граница территории мониторинга |
-| `utm_32637` | полоса зоны UTM 37N, западнее 42° в. д. |
-| `utm_32638` | полоса зоны UTM 38N, восточнее 42° в. д. |
+| `aoi` | border of monitoring territory |
+| `utm_32637` | strip of UTM 37N, west of 42°E. |
+| `utm_32638` | UTM 38N, east of 42°E. |
 
-Зоны UTM даны для удобства: весь охват укладывается в 37N и 38N, и при
-самостоятельном сборе снимков проще сразу выбрать нужную проекцию, чем
-перепроецировать потом.
+UTM zones are given for convenience: all coverage fits into 37N and 38N
+It is easier to choose the desired projection immediately than
+project later.
 
-Атрибуты: `name`, `role`, `subjects`, `seasons` (2019–2025),
+Attributes: `name`, `role`, `subjects`, `seasons` (2019–2025)),
 `months` (04–10), `utm_zones`, `area_km2`.
 
-## Чего внутри нет
+## There's nothing inside
 
-Границ закрытых блоков private-теста. Разделение public/private построено
-по ним, и машиночитаемый файл с их геометрией был бы прямой подсказкой,
-какие территории размечать вручную. В постановке они названы словами —
-этого достаточно, чтобы понять устройство сплита.
+Boundaries of closed blocks of the private test. Public/private division built
+A computer-readable file with its geometry would be a direct clue,
+What areas to mark manually. In the play, they're called words —
+This is enough to understand the split device.
 
-## Как проверить
+## How do you check?
 
     python -c "import json; d=json.load(open('fire_monitoring_aoi.geojson', encoding='utf-8')); \
-        print(len(d['features']), 'объекта,', len(d['features'][0]['geometry']['coordinates'][0]), 'вершин')"
+        print(len(d['features'), 'object,', len(d)['features'][0]['geometry']['coordinates'][0]), "tops"
 
-Ожидается: 3 объекта, 17 вершин (первая совпадает с последней — кольцо замкнуто).
+Expected: 3 objects, 17 vertices (the first coincides with the last - the ring is closed)).
